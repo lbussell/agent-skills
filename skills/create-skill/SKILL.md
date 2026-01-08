@@ -79,16 +79,20 @@ Include feedback loops: validate → fix errors → repeat.
 
 ## With Executable Scripts
 
-### Directory Structure
+Add scripts to skills when you need to abstract over complex operations.
+Use .NET file-based apps to write the scripts. Use the "dotnet-file-based-apps"
+skill to aide in creating scripts.
+
+### Scripts Directory Structure
 
 ```
 my-skill/
 ├── SKILL.md
 ├── reference.md
 └── scripts/
-    ├── analyze.py
-    ├── validate.py
-    └── apply.py
+    ├── analyze.cs
+    ├── validate.cs
+    └── apply.cs
 ```
 
 ### Document Scripts Clearly
@@ -96,14 +100,14 @@ my-skill/
 ````markdown
 ## Utility Scripts
 
-**analyze.py**: Extract metadata from input file
+**analyze.cs**: Extract metadata from input file
 ```bash
-python scripts/analyze.py input.pdf > metadata.json
+dotnet scripts/analyze.cs input.pdf > metadata.json
 ```
 
-**validate.py**: Check for errors before proceeding
+**validate.cs**: Check for errors before proceeding
 ```bash
-python scripts/validate.py metadata.json
+dotnet scripts/validate.cs metadata.json
 # Returns "OK" or lists specific errors
 ```
 ````
@@ -111,50 +115,53 @@ python scripts/validate.py metadata.json
 ### Execute vs. Read
 
 Be explicit about intent:
-- **Execute**: "Run `scripts/validate.py` to check the output"
-- **Read**: "See `scripts/validate.py` for the validation algorithm"
+- **Execute**: "Run `dotnet scripts/validate.cs` to check the output"
+- **Read**: "See `scripts/validate.cs` for the validation algorithm"
 
 Execution is preferred—it's more reliable and doesn't consume context tokens.
 
 ### Handle Errors in Scripts
 
-```python
-# Good: Handle errors explicitly
-def process(path):
-    try:
-        return open(path).read()
-    except FileNotFoundError:
-        print(f"Creating {path} with defaults")
-        open(path, 'w').write('')
-        return ''
+```csharp
+// Good: Handle errors explicitly
+string Process(string path)
+{
+    if (!File.Exists(path))
+    {
+        Console.WriteLine($"Creating {path} with defaults");
+        File.WriteAllText(path, "");
+        return "";
+    }
+    return File.ReadAllText(path);
+}
 
-# Bad: Let the agent figure it out
-def process(path):
-    return open(path).read()
+// Bad: Let the agent figure it out
+string Process(string path) => File.ReadAllText(path);
 ```
 
 ### Document Constants
 
-```python
-# Good: Self-documenting
-REQUEST_TIMEOUT = 30  # Most requests complete within 30s
-MAX_RETRIES = 3       # Intermittent failures resolve by retry 2
+```csharp
+// Good: Self-documenting
+const int RequestTimeout = 30;  // Most requests complete within 30s
+const int MaxRetries = 3;       // Intermittent failures resolve by retry 2
 
-# Bad: Magic numbers
-TIMEOUT = 47
-RETRIES = 5
+// Bad: Magic numbers
+const int Timeout = 47;
+const int Retries = 5;
 ```
 
 ### List Dependencies
 
-```markdown
+````markdown
 ## Setup
 
-Install required packages:
-```bash
-pip install pdfplumber pypdf
+Add required packages as directives in your script:
+```csharp
+#:package CliWrap@3.6.6
+#:package System.CommandLine@*
 ```
-```
+````
 
 ## Checklist
 
