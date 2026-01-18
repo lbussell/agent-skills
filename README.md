@@ -1,6 +1,6 @@
 # agent-skills
 
-A collection of skills for Claude agents.
+A collection of my personal skills for AI coding agents.
 
 ## Skills
 
