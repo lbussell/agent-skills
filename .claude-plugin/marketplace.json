@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "agent-skills",
-      "source": ".",
+      "source": "./",
       "description": "A collection of skills for Claude agents including prompt engineering, GitHub Actions, Azure Pipelines, .NET file-based apps, Ghostty configuration, and skill authoring guidance.",
       "version": "1.0.0"
     }
