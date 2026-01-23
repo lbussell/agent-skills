@@ -13,24 +13,24 @@ Determine what the user wants reviewed, then get the diffs:
 
 ```bash
 # Last N commits
-git diff HEAD~3..HEAD -- '*.cs'
+git --no-pager diff HEAD~3..HEAD -- '*.cs'
 
 # Since a specific commit
-git diff abcd1234..HEAD -- '*.cs'
+git --no-pager diff abcd1234..HEAD -- '*.cs'
 
 # Between two commits
-git diff abcd1234..2345bcde -- '*.cs'
+git --no-pager diff abcd1234..2345bcde -- '*.cs'
 
 # Staged changes
-git diff --cached -- '*.cs'
+git --no-pager diff --cached -- '*.cs'
 
 # Unstaged changes
-git diff -- '*.cs'
+git --no-pager diff -- '*.cs'
 ```
 
 For full file context when needed:
 ```bash
-git show HEAD:path/to/file.cs
+git --no-pager show HEAD:path/to/file.cs
 ```
 
 ## Review Checklist
