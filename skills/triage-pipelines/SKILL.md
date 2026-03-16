@@ -1,35 +1,16 @@
 ---
 name: triage-pipelines
 description: >-
-  Lists all failing and warning Azure Pipelines across configured pipeline folders for daily triage.
-  Reads a pipelines.json config file or accepts CLI args for a single query. Use for daily pipeline
-  health checks.
+  Lists all failing and warning Azure Pipelines for daily triage. Checks preconfigured pipeline
+  folders and reports any with failed or warning builds. Use for daily pipeline health checks.
 ---
-
-## Configuration
-
-Create a `pipelines.json` file listing the Azure DevOps locations to monitor:
-
-```json
-[
-  { "org": "myorg", "project": "myproject", "folder": "my-repo" },
-  { "org": "myorg", "project": "public", "folder": "my-repo" }
-]
-```
 
 ## Workflow
 
 ### Step 1: List failing pipelines
 
 ```shell
-# Use the config file (defaults to pipelines.json in cwd)
 dotnet scripts/GetFailingPipelines.cs
-
-# Use a custom config file path
-dotnet scripts/GetFailingPipelines.cs --config /path/to/pipelines.json
-
-# Single query without a config file
-dotnet scripts/GetFailingPipelines.cs --org myorg --azdo-project myproject --folder my-repo
 ```
 
 ### Step 2: Investigate each failure
