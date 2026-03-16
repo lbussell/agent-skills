@@ -1,0 +1,34 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+artifacts_stage_1/
+x64/ !eng/common/cross/x64/
+x86/ !eng/common/cross/x86/
+msbuild.log
+msbuild.err
+msbuild.wrn
+*.binlog
+
+# Visual Studio Code cache/options directory
+.vscode/
+.vs
+
+# Visual Studio user-specific files
+**/launchSettings.json
+**/*.user
+
+# ImageBuilder directory
+.Microsoft.DotNet.ImageBuilder
+
+# .NET and tools directories
+.dotnet/
+.nuget/
+.packages/
+.tools/
+
+# Test files
+*.trx
