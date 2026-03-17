@@ -6,12 +6,16 @@ A collection of my personal skills for AI coding agents.
 
 | Skill | Description |
 |-------|-------------|
-| **azure-pipelines-tasks** | Navigate Azure Pipelines task source code |
-| **create-skill** | Guide for authoring agent skills |
-| **dotnet-file-based-apps** | Create .NET apps from single C# files |
-| **ghostty-config** | Configure Ghostty terminal |
-| **github-actions-composite** | Create GitHub Actions composite actions |
-| **prompt-engineering** | Techniques for effective LLM prompts |
+| **create-sub-agent-worktree** | Spawn a Copilot CLI agent in its own git worktree and tmux window |
+| **investigating-pipeline** | Diagnose a single Azure Pipelines build — timeline tree and task logs |
+| **investigating-pull-request** | Show CI status for a GitHub PR with Azure Pipelines build timelines |
+| **triage-followup** | Produce a follow-up document from a .NET containers triage meeting transcript |
+| **triage-pipelines** | List all failing and warning Azure Pipelines for daily triage |
+| **triage-pull-requests** | Review CI status of all open PRs in a repository |
+
+The investigating and triage skills auto-detect the current repository:
+- **GitHub repo** — via `gh repo set-default --view`
+- **Azure DevOps org/project** — parsed from an Azure DevOps git remote
 
 ## Installation
 
