@@ -10,22 +10,28 @@ disable-model-invocation: true
 
 ## Workflow
 
-### Step 1: List open pull requests
+### Step 1: Detect the repository
 
 ```shell
-gh pr list --repo dotnet/dotnet-docker --state open --json number,title,author,headRefName
-gh pr list --repo dotnet/docker-tools --state open --json number,title,author,headRefName
-gh pr list --repo microsoft/dotnet-framework-docker --state open --json number,title,author,headRefName
+gh repo set-default --view
 ```
 
-### Step 2: Check each PR's pipeline status
+Use the output as the `--repo` value in subsequent commands. If no default is set, ask the user to run `gh repo set-default` first.
+
+### Step 2: List open pull requests
+
+```shell
+gh pr list --repo <detected_repo> --state open --json number,title,author,headRefName
+```
+
+### Step 3: Check each PR's pipeline status
 
 For each open PR, run the `GetPullRequestStatus.cs` script from the `investigating-pull-request` skill:
 
 ```shell
-dotnet skills/investigating-pull-request/scripts/GetPullRequestStatus.cs <number>
+dotnet skills/investigating-pull-request/scripts/GetPullRequestStatus.cs <number> --repo <detected_repo>
 ```
 
-### Step 3: Focus on failures
+### Step 4: Focus on failures
 
 Prioritize PRs where pipeline runs show `Failed` results. For each failing build, use the `investigating-pipeline` skill to read task logs and diagnose the root cause.

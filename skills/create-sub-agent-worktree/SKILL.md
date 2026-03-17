@@ -5,6 +5,8 @@ description: >-
   via worktrunk (`wt`), opens a tmux window in the target session, and launches `copilot -i` with a
   prompt. Use when the user asks to run a task in parallel, hand off work to another agent, or start
   a background coding task in a separate worktree.
+user-invocable: true
+disable-model-invocation: true
 ---
 
 ## Script

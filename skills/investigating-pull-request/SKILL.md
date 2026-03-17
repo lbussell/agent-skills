@@ -9,7 +9,7 @@ description: >-
 ## Usage
 
 ```shell
-# By PR number (auto-detects repo from current git remote)
+# By PR number (auto-detects repo from 'gh repo set-default --view')
 dotnet scripts/GetPullRequestStatus.cs 123
 
 # By PR number with explicit repo
@@ -19,6 +19,6 @@ dotnet scripts/GetPullRequestStatus.cs 123 --repo owner/repo
 dotnet scripts/GetPullRequestStatus.cs 123 --show-all
 ```
 
-The script outputs PR metadata followed by a build timeline tree for each Azure Pipelines run. Non-Azure checks (GitHub Actions, etc.) are listed separately at the end.
+The script auto-detects the GitHub repository via `gh repo set-default --view` when `--repo` is not provided. It outputs PR metadata followed by a build timeline tree for each Azure Pipelines run. Non-Azure checks (GitHub Actions, etc.) are listed separately at the end.
 
 To dig deeper into a specific failing build, use the `investigating-pipeline` skill with the build ID shown in the output.

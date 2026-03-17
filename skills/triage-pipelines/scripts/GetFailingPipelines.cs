@@ -1,55 +1,72 @@
 #!/usr/bin/env dotnet
 #:project ../../../src/AgentSkills.csproj
 
+using System.CommandLine;
 using LoganBussell.AgentSkills;
 using static System.Console;
 
-// Add or remove entries here to change which pipeline folders are monitored.
-PipelineLocation[] locations =
-[
-    new("dnceng", "internal", "dotnet/docker-tools"),
-];
-
-int totalUnhealthy = 0;
-
-foreach (PipelineLocation location in locations)
+Option<string> orgOption = new("--org", "-o")
 {
-    string normalizedFolder = @"\" + location.Folder.Trim('\\', '/').Replace('/', '\\');
+    Description = "The Azure DevOps organization. Auto-detected from an Azure DevOps git remote if not provided.",
+};
+Option<string> projectOption = new("--azdo-project")
+{
+    Description = "The Azure DevOps project. Auto-detected from an Azure DevOps git remote if not provided.",
+};
+Option<string> folderOption = new("--folder", "-f")
+{
+    Description = "The pipeline folder path. Defaults to the GitHub owner/repo from 'gh repo set-default --view'.",
+};
 
-    using AzureDevOpsClient client = AzureDevOpsClient.Create(org: location.Org, project: location.Project);
-    DefinitionsResponse buildDefinitions = await client.GetBuildDefinitionsAsync(normalizedFolder);
-    List<BuildDefinitionReference> unhealthyPipelines = buildDefinitions
-        .Value.Where(definition => definition.LatestCompletedBuild is { Result: "failed" or "partiallySucceeded" })
-        .ToList();
+RootCommand rootCommand = new("Lists failing and warning Azure Pipelines.")
+{
+    orgOption,
+    projectOption,
+    folderOption,
+};
 
-    if (unhealthyPipelines.Count == 0)
-    {
-        continue;
-    }
+ParseResult parseResult = rootCommand.Parse(args);
+string? org = parseResult.GetValue(orgOption);
+string? project = parseResult.GetValue(projectOption);
+string? folder = parseResult.GetValue(folderOption);
 
-    totalUnhealthy += unhealthyPipelines.Count;
-    WriteLine($"## {location.Org}/{location.Project} - {location.Folder}");
-    WriteLine();
-
-    foreach (BuildDefinitionReference def in unhealthyPipelines)
-    {
-        ApiBuild build = def.LatestCompletedBuild!;
-        string result = BuildTimelineRendering.FormatBuildResult(build.Result);
-        WriteLine($"Pipeline: {def.Name}");
-        WriteLine($"  Result: {result}");
-        WriteLine($"  Commit: {build.SourceVersion ?? "unknown"}");
-        WriteLine($"  Link:   {client.GetBuildResultUrl(build.Id)}");
-        WriteLine();
-    }
+// Auto-detect AzDO org/project from git remote when not provided.
+if (org is null || project is null)
+{
+    (string detectedOrg, string detectedProject) = await GitHelper.GetAzureDevOpsRemoteAsync();
+    org ??= detectedOrg;
+    project ??= detectedProject;
 }
 
-if (totalUnhealthy == 0)
+// Auto-detect pipeline folder from the default GitHub repo when not provided.
+folder ??= await GitHelper.GetDefaultGitHubRepoAsync();
+
+string normalizedFolder = @"\" + folder.Trim('\\', '/').Replace('/', '\\');
+
+using AzureDevOpsClient client = AzureDevOpsClient.Create(org: org, project: project);
+DefinitionsResponse buildDefinitions = await client.GetBuildDefinitionsAsync(normalizedFolder);
+List<BuildDefinitionReference> unhealthyPipelines = buildDefinitions
+    .Value.Where(definition => definition.LatestCompletedBuild is { Result: "failed" or "partiallySucceeded" })
+    .ToList();
+
+if (unhealthyPipelines.Count == 0)
 {
     WriteLine("No failing or warning pipelines found.");
-}
-else
-{
-    WriteLine($"Total: {totalUnhealthy} unhealthy pipeline(s)");
+    return;
 }
 
-record PipelineLocation(string Org, string Project, string Folder);
+WriteLine($"## {org}/{project} - {folder}");
+WriteLine();
+
+foreach (BuildDefinitionReference def in unhealthyPipelines)
+{
+    ApiBuild build = def.LatestCompletedBuild!;
+    string result = BuildTimelineRendering.FormatBuildResult(build.Result);
+    WriteLine($"Pipeline: {def.Name}");
+    WriteLine($"  Result: {result}");
+    WriteLine($"  Commit: {build.SourceVersion ?? "unknown"}");
+    WriteLine($"  Link:   {client.GetBuildResultUrl(build.Id)}");
+    WriteLine();
+}
+
+WriteLine($"Total: {unhealthyPipelines.Count} unhealthy pipeline(s)");

@@ -10,7 +10,11 @@ description: >-
 ### Step 1: List failing pipelines
 
 ```shell
+# Auto-detects AzDO org/project from git remote and pipeline folder from 'gh repo set-default --view'
 dotnet scripts/GetFailingPipelines.cs
+
+# Or override any auto-detected value
+dotnet scripts/GetFailingPipelines.cs --org myorg --azdo-project myproject --folder owner/repo
 ```
 
 ### Step 2: Investigate each failure

@@ -32,8 +32,8 @@ Options:
 
 The script will:
   1. Detect (or accept) a tmux session
-  2. Create a new tmux window named after the branch
-  3. Run `wt switch --create <branch>` inside that window
+  2. Run `wt switch --create <branch>` to create the worktree
+  3. Create a new tmux window in the worktree directory
   4. Launch `copilot -i "<prompt>"` in the new worktree
 EOF
     exit 0
@@ -84,17 +84,25 @@ fi
 # -- Sanitize branch for tmux window name -------------------------------------
 WINDOW_NAME="${BRANCH//\//-}"
 
-# -- Create tmux window and run worktrunk + copilot ---------------------------
-echo "Creating worktree '$BRANCH' in tmux session '$SESSION'..."
+# -- Create worktree outside tmux, then open tmux window with copilot ---------
+echo "Creating worktree '$BRANCH'..."
 
-# Create a new window. The first command switches into the worktree via wt,
-# then launches copilot. We use a small shell wrapper so the window stays
-# open if something fails.
-WT_CMD="wt switch --create '$BRANCH'"
-[[ -n "$BASE" ]] && WT_CMD+=" --base='$BASE'"
+WT_ARGS=(switch --create "$BRANCH")
+[[ -n "$BASE" ]] && WT_ARGS+=(--base "$BASE")
 
-tmux new-window -t "$SESSION" -n "$WINDOW_NAME" \
-    "$WT_CMD && copilot -i '$PROMPT'; exec \$SHELL"
+# Run wt outside tmux and capture the worktree path via -x pwd
+WORKTREE_PATH="$(wt "${WT_ARGS[@]}" -x pwd)" \
+    || die "wt failed to create worktree '$BRANCH'"
+
+echo "Worktree created at: $WORKTREE_PATH"
+echo "Opening tmux window in session '$SESSION'..."
+
+# Write prompt to a temp file to avoid shell escaping issues with complex prompts
+PROMPT_FILE="$(mktemp)"
+printf '%s' "$PROMPT" > "$PROMPT_FILE"
+
+tmux new-window -t "$SESSION" -n "$WINDOW_NAME" -c "$WORKTREE_PATH" \
+    "copilot -i \"\$(cat '$PROMPT_FILE')\" ; rm -f '$PROMPT_FILE'; exec \$SHELL"
 
 echo "✓ Window '$WINDOW_NAME' created in session '$SESSION'"
 echo "  Attach with: tmux attach -t $SESSION"

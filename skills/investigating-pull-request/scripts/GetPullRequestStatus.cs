@@ -33,8 +33,9 @@ string pr = parseResult.GetValue(pullRequestArgument)!;
 string? repo = parseResult.GetValue(repoOption);
 bool showAll = parseResult.GetValue(showAllOption);
 
-// When --repo isn't set, gh auto-detects from the current git remote.
-List<string> repoArgs = repo is not null ? ["--repo", repo] : [];
+// When --repo isn't set, detect from 'gh repo set-default --view'.
+repo ??= await GitHelper.GetDefaultGitHubRepoAsync();
+List<string> repoArgs = ["--repo", repo];
 
 // Fetch PR metadata and check runs in parallel
 List<string> prViewArgs = ["pr", "view", pr, "--json", "title,headRefName,headRepositoryOwner,headRepository,author", .. repoArgs];
