@@ -1,37 +1,47 @@
 ---
 name: triage-pull-requests
 description: >-
-  Reviews the CI status of all open pull requests in a repository. Lists open PRs via the GitHub
-  CLI, then checks each one's pipeline status. Use for daily PR triage to identify PRs with failing
-  CI that need attention.
+  Triage open pull requests in a repository into actionable categories: ready to merge, needs review, needs action, stale, waiting. Use for daily PR triage to quickly identify what needs attention.
 user-invocable: true
 disable-model-invocation: true
 ---
 
 ## Workflow
 
-### Step 1: Detect the repository
+### Step 1: List open pull requests
 
 ```shell
-gh repo set-default --view
+gh pr list
 ```
 
-Use the output as the `--repo` value in subsequent commands. If no default is set, ask the user to run `gh repo set-default` first.
+### Step 2: Investigate each PR
 
-### Step 2: List open pull requests
+For each open PR, gather its full context:
 
-```shell
-gh pr list --repo <detected_repo> --state open --json number,title,author,headRefName
-```
+- **Review & merge status:** `gh pr view <number>`
+- **CI status:** Use the `investigating-pull-request` skill to check pipeline status.
 
-### Step 3: Check each PR's pipeline status
+For PRs with CI failures, use the `investigating-pipeline` skill to read task logs and identify root causes.
 
-For each open PR, run the `GetPullRequestStatus.cs` script from the `investigating-pull-request` skill:
+### Step 3: Correlate failures with recent pull requests and issues
 
-```shell
-dotnet skills/investigating-pull-request/scripts/GetPullRequestStatus.cs <number> --repo <detected_repo>
-```
+- Check recent issues: `gh issue list --state all`
+- Check recent pull requests: `gh pr list --state merged`
 
-### Step 4: Focus on failures
+### Step 3: Categorize and present results
 
-Prioritize PRs where pipeline runs show `Failed` results. For each failing build, use the `investigating-pipeline` skill to read task logs and diagnose the root cause.
+Using everything you've learned, place each PR into **one** of these categories (in this priority order):
+
+1. **Ready to Merge** — Approved, CI passing, no merge conflicts
+2. **Needs Your Review** — `lbussell` is a requested reviewer
+3. **Needs Author Action** — Changes requested, CI failing, or merge conflicts
+4. **Stale** — No updates in 7+ days and not ready to merge
+5. **Waiting** — CI in progress, awaiting reviews from others, recently updated drafts, etc.
+
+Use your judgment when things are ambiguous. For example:
+- A PR with only flaky-test failures might still be ready to merge
+- A draft PR from the user that hasn't been touched in weeks is stale even if CI is green
+
+For "Needs Author Action" PRs with CI failures, include the root cause diagnosis.
+
+End with a recommended next action.
