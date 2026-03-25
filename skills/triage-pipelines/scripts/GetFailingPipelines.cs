@@ -46,7 +46,9 @@ string normalizedFolder = @"\" + folder.Trim('\\', '/').Replace('/', '\\');
 using AzureDevOpsClient client = AzureDevOpsClient.Create(org: org, project: project);
 DefinitionsResponse buildDefinitions = await client.GetBuildDefinitionsAsync(normalizedFolder);
 List<BuildDefinitionReference> unhealthyPipelines = buildDefinitions
-    .Value.Where(definition => definition.LatestCompletedBuild is { Result: "failed" or "partiallySucceeded" })
+    .Value.Where(definition =>
+        !definition.Name.Contains("unofficial", StringComparison.OrdinalIgnoreCase)
+        && definition.LatestCompletedBuild is { Result: "failed" or "partiallySucceeded" })
     .ToList();
 
 if (unhealthyPipelines.Count == 0)
