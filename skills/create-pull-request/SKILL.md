@@ -1,8 +1,6 @@
 ---
 name: create-pull-request
-description: >-
-  Draft and create GitHub pull requests in Logan Bussell's preferred style. Use when the user asks to
-  open, file, draft, or create a PR, especially for bug fixes or tooling changes.
+description: Draft and create a GitHub pull request.
 user-invocable: true
 disable-model-invocation: true
 ---
