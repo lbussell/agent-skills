@@ -1,8 +1,8 @@
 ---
-name: create-pull-request
-description: Draft and create a GitHub pull request.
-user-invocable: true
-disable-model-invocation: true
+name: creating-pull-requests
+description: >-
+  Open a pull request on GitHub. Use when the user asks to open or create a
+  pull request on GitHub.
 ---
 
 ## Workflow
@@ -10,7 +10,7 @@ disable-model-invocation: true
 1. Inspect the branch diff and target repository context.
 2. Determine the PR style: simple change, bug/failure fix, or feature/tooling change.
 3. Draft a concise title and body using the style guide below.
-4. Show the draft to the user unless they explicitly asked to create it without confirmation.
+4. Confirm the draft PR details (title, description, target branch) with the user.
 5. Create the PR with `gh pr create --title "<title>" --body "<body>"`, adding `--base`, `--head`, `--repo`, or `--draft` when needed.
 
 ## Style guide

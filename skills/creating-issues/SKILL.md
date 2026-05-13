@@ -1,17 +1,15 @@
 ---
-name: create-issue
+name: creating-issues
 description: >-
-  Draft and create GitHub issues in Logan Bussell's preferred style. Use when the user asks to file,
-  open, draft, or create an issue, especially for bug reports, CI failures, or feature requests.
-user-invocable: true
-disable-model-invocation: true
+  Open an issue on GitHub. Use when the user asks to file/open/draft/create an
+  issue. Useful for bug reports, pipeline failures, feature requests, etc.
 ---
 
 ## Workflow
 
 1. Gather the target repository, issue type, and relevant evidence.
 2. Draft a title and body using the style guide below.
-3. Show the draft to the user unless they explicitly asked to create it without confirmation.
+3. Confirm the draft contents with the user.
 4. Create the issue with `gh issue create --repo <owner/repo> --title "<title>" --body "<body>"`.
 
 ## Style guide
