@@ -7,14 +7,10 @@ A collection of my personal skills for AI coding agents.
 <!-- BEGIN GENERATED SKILLS TABLE -->
 | Skill | Description | Tokens |
 |-------|-------------|-------------|
-| [**create-issue**](./skills/create-issue/SKILL.md) | Draft and create GitHub issues in Logan Bussell's preferred style. Use when the user asks to file, open, draft, or create an issue, especially for bug reports, CI failures, or feature requests. | 857 |
-| [**create-pull-request**](./skills/create-pull-request/SKILL.md) | Draft and create a GitHub pull request. | 840 |
-| [**investigating-pipeline**](./skills/investigating-pipeline/SKILL.md) | Diagnoses a single Azure Pipelines build. Shows the build timeline tree with stages, jobs, and task results, and retrieves task logs for debugging failures. Use when a user provides a build ID or Azure DevOps build URL and wants to understand what failed and why. | 165 |
-| [**investigating-pull-request**](./skills/investigating-pull-request/SKILL.md) | Shows the CI status for a single GitHub pull request. Displays PR metadata (title, author, fork, branch) and renders Azure Pipelines build timeline trees for each pipeline run. Use when a user provides a PR number or URL and wants to check its CI status or diagnose failures. | 177 |
+| [**creating-issues**](./skills/creating-issues/SKILL.md) | Open an issue on GitHub. Use when the user asks to file/open/draft/create an issue. Useful for bug reports, pipeline failures, feature requests, etc. | 849 |
+| [**creating-pull-requests**](./skills/creating-pull-requests/SKILL.md) | Open a pull request on GitHub. Use when the user asks to open or create a pull request on GitHub. | 841 |
 | [**property-testing-cscheck**](./skills/property-testing-cscheck/SKILL.md) | Write property-based tests in C# using CsCheck. Covers generator composition, property selection (round-trip, invariant, model-based, metamorphic), parallel linearizability testing, performance comparison, classification, and configuration. Use when writing, reviewing, or improving property-based tests in a .NET project that uses CsCheck. | 1,678 |
-| [**triage-issues**](./skills/triage-issues/SKILL.md) | Triage issues labeled 'untriaged' in a repository. Investigates each issue, correlates with recent activity, and categorizes into: customer issue, ready for work, needs investigation, or already addressed. Informational only — does not modify issues. | 556 |
-| [**triage-pipelines**](./skills/triage-pipelines/SKILL.md) | List all failing and warning Azure Pipelines for daily triage. Checks preconfigured pipeline folders and reports any with failed or warning builds. Use for daily pipeline health checks. | 195 |
-| [**triage-pull-requests**](./skills/triage-pull-requests/SKILL.md) | Triage open pull requests in a repository into actionable categories: ready to merge, needs review, needs action, stale, waiting. Use for daily PR triage to quickly identify what needs attention. | 344 |
+| [**triaging-issues**](./skills/triaging-issues/SKILL.md) | Triage issues labeled 'untriaged' in a repository. Investigates each issue, correlates with recent activity, and categorizes into: customer issue, ready for work, needs investigation, or already addressed. Informational only — does not modify issues. | 556 |
 <!-- END GENERATED SKILLS TABLE -->
 
 The investigating and triage skills auto-detect the current repository:

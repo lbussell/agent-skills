@@ -1,5 +1,5 @@
 ---
-name: triage-issues
+name: triaging-issues
 description: >-
   Triage issues labeled 'untriaged' in a repository. Investigates each issue, correlates with recent
   activity, and categorizes into: customer issue, ready for work, needs investigation, or already
