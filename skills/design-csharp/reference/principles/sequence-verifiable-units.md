@@ -13,4 +13,4 @@ Order work as a sequence of small units, each ending in a state you can check, a
 - Verify before advancing. Red to green per unit, never deferred to a final batch.
 - Order the units so the sequence builds confidence on its own, for you while executing and for a reviewer reading the stack.
 
-The sequencing complement to the **prove-it-works** principle skill, which keeps each check real, and the **build-the-lever** principle skill, which makes the per-unit check cheap.
+This principle complements [Prove It Works](./prove-it-works.md), which keeps each check real, and [Build the Lever](./build-the-lever.md), which makes the per-unit check cheap.
