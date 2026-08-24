@@ -3,9 +3,8 @@ name: design-csharp
 description: Design a new C# feature before implementation.
 ---
 
-# Design a feature
-
-Quickly sketch out a design for new code before implementing in order to align with the operator. The goal is to reach shared understanding with the operator so that coding can be done all at once.
+Quickly sketch out a design for new code before implementing in order to align with the operator.
+The goal is to reach shared understanding with the operator so that coding can be done all at once.
 
 Respond with:
 - High level overview of the current system
