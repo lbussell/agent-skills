@@ -1,6 +1,6 @@
 ---
 name: design-csharp
-description: Design a new C# feature before implementation.
+description: Design a new C# feature before implementation. Use only when explicitly invoked.
 ---
 
 Quickly sketch out a design for new code before implementing in order to align with the operator.
