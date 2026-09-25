@@ -71,6 +71,9 @@ This list is not comprehensive, just a starting point.
 
 ### Testing red flags
 
+Did the user specifically ask for tests?
+If not, then suggest that they be removed - especially if the tests provide low value.
+
 Avoid asserting:
 
 - Which private methods were called
@@ -85,8 +88,11 @@ Avoid low value tests like:
 - A getter returns its field
 - In general, language and framework features
 
-Ensure tests *do*:
+Properties of good tests:
 
 - Assert one coherent behavior per test.
   Multiple assertions are OK when they collectively describe one outcome.
--
+- Resilient to behavior preservicing implementation changes.
+- Readable: clearly shows scenario and expectation.
+- Specific: failure explains what behavior broke.
+- Isolated: does not perform I/O (common instances are writing to disk and making network calls).
