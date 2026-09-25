@@ -8,7 +8,8 @@ We will now go through a process designed to simplify your implementation.
 ### Workflow
 
 Invoke an "overengineering-advisor" subagent using `opus-5.5`.
-Provide it with the user's prompt and tell it what code to review.
+Provide it with the user's request and tell it what code to review.
+Include enough context to allow the advisor to understand the scope of the code and request, but let your code speak for itself.
 For the code to review, select exactly one of:
 
 - All unstaged changes
@@ -18,7 +19,7 @@ For the code to review, select exactly one of:
 Use the following prompt:
 
 ```md
-The operator's prompt was: `$USER_PROMPT`
+The operator's request was: `$USER_REQUEST`
 The code up for review is `$CODE_TO_REVIEW`
 ```
 
