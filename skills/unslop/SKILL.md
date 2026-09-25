@@ -1,6 +1,6 @@
 ---
 name: unslop
-description: Cut AI tells from writing. Only invoke when explicitly asked.
+description: Cut AI tells from writing. Use only when explicitly invoked.
 ---
 
 # Unslop
