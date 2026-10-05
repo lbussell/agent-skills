@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -88,6 +88,134 @@ test("the default graph has one parallel reviewer per review prompt", async (t) 
     const { review } = await fixture(t);
     assert.deepEqual(review.graph.nodes.map((node) => node.prompt), ["reviews/design.md", "reviews/readability.md", "reviews/testing.md"]);
     assert.deepEqual(review.graph.edges, []);
+});
+
+test("the canvas starts a first review with the selected scope and saves it", async (t) => {
+    for (const scope of [
+        "Uncommitted changes (staged, unstaged, and untracked files)",
+        "Last commit (HEAD), excluding uncommitted changes",
+        "Review app.js for off-by-one errors.",
+    ]) {
+        await t.test(scope, async (t) => {
+            const { review, prompts, options } = await fixture(t);
+            const canvas = await startServer(review);
+            t.after(() => canvas.close());
+            assert.equal(review.request, undefined);
+
+            const request = "Review the selected code and report actionable findings.";
+            const response = await fetch(`${canvas.url}run`, {
+                method: "POST",
+                headers: { Origin: new URL(canvas.url).origin, "Content-Type": "application/json" },
+                body: JSON.stringify({ request, scope }),
+            });
+            assert.equal(response.status, 200);
+            await review.finished;
+
+            assert.deepEqual(review.request, { request, scope });
+            assert.equal(prompts.length, 3);
+            assert.ok(prompts.every(({ prompt }) => prompt.includes(scope)));
+            const saved = JSON.parse(await readFile(options.sessionFile, "utf8"));
+            assert.deepEqual(saved.request, { request, scope });
+        });
+    }
+});
+
+test("a new canvas review uses its selected scope instead of the previous request", async (t) => {
+    const { review, prompts } = await fixture(t);
+    await review.start({ request: "Count", scope: "app.js" });
+    await review.finished;
+
+    const canvas = await startServer(review);
+    t.after(() => canvas.close());
+    const request = { request: "Review the selected code.", scope: "Last commit (HEAD)" };
+    const response = await fetch(`${canvas.url}run`, {
+        method: "POST",
+        headers: { Origin: new URL(canvas.url).origin, "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+    });
+    assert.equal(response.status, 200);
+    await review.finished;
+    assert.deepEqual(review.request, request);
+    assert.ok(prompts.slice(-3).every(({ prompt }) => prompt.includes(request.scope)));
+});
+
+test("Ask the agent requests a scope without starting reviewers or inventing a saved request", async (t) => {
+    const { review, messages, prompts } = await fixture(t);
+    const canvas = await startServer(review);
+    t.after(() => canvas.close());
+
+    const response = await fetch(`${canvas.url}run/ask`, {
+        method: "POST",
+        headers: { Origin: new URL(canvas.url).origin },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(messages.length, 1);
+    assert.match(messages[0], /Choose what code to review from this conversation/);
+    assert.match(messages[0], /review_start/);
+    assert.equal(review.request, undefined);
+    assert.equal(review.run.status, "idle");
+    assert.equal(prompts.length, 0);
+});
+
+test("a blank canvas scope is rejected without starting a review", async (t) => {
+    const { review, prompts } = await fixture(t);
+    const canvas = await startServer(review);
+    t.after(() => canvas.close());
+
+    const response = await fetch(`${canvas.url}run`, {
+        method: "POST",
+        headers: { Origin: new URL(canvas.url).origin, "Content-Type": "application/json" },
+        body: JSON.stringify({ request: "Review the selected code.", scope: "   " }),
+    });
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /which code to review/);
+    assert.equal(review.request, undefined);
+    assert.equal(review.pass, 0);
+    assert.equal(prompts.length, 0);
+});
+
+test("the canvas rejects both startup paths while a review runs", async (t) => {
+    const finish = deferred();
+    const { review, messages } = await fixture(t, { runAgent: () => finish.promise });
+    t.after(async () => {
+        finish.resolve("Done.");
+        await review.finished;
+    });
+    await review.start({ request: "Count", scope: "app.js" });
+    const canvas = await startServer(review);
+    t.after(() => canvas.close());
+
+    for (const route of ["run", "run/ask"]) {
+        const response = await fetch(`${canvas.url}${route}`, {
+            method: "POST",
+            headers: { Origin: new URL(canvas.url).origin, "Content-Type": "application/json" },
+            body: JSON.stringify({ request: "Review", scope: "HEAD" }),
+        });
+        assert.equal(response.status, 409);
+        assert.match((await response.json()).error, /already running/);
+    }
+    assert.equal(messages.length, 0);
+    assert.equal(review.pass, 1);
+});
+
+test("Ask the agent reports message failures and refuses an empty reviewer graph", async (t) => {
+    const { review } = await fixture(t);
+    const canvas = await startServer(review);
+    t.after(() => canvas.close());
+    review.api.notify = async () => { throw new Error("The agent is disconnected."); };
+    const ask = () => fetch(`${canvas.url}run/ask`, {
+        method: "POST",
+        headers: { Origin: new URL(canvas.url).origin },
+    });
+
+    const failed = await ask();
+    assert.equal(failed.status, 500);
+    assert.equal((await failed.json()).error, "The agent is disconnected.");
+
+    await review.setGraph({ nodes: [], edges: [] });
+    const empty = await ask();
+    assert.equal(empty.status, 400);
+    assert.match((await empty.json()).error, /Add a reviewer/);
 });
 
 test("a review pass sends each reviewer its definition, the request, and its tool instructions", async (t) => {

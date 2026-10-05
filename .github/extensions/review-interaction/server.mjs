@@ -12,7 +12,8 @@ const assets = new Map(await Promise.all([
 
 const actions = {
     "PUT graph": (review, body) => review.setGraph(body),
-    "POST run": (review) => review.restart(),
+    "POST run": (review, body) => review.start(body),
+    "POST run/ask": (review) => review.askAgent(),
     "POST stop": (review) => review.stop(),
     "POST presets": (review, body) => review.savePreset(body.name),
     "POST presets/load": (review, body) => review.loadPreset(body.name),

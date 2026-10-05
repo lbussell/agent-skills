@@ -11,8 +11,8 @@ or start a new Copilot session after updates.
 
 ## Flow
 
-1. The implementer calls `review_start` with the user's request and the code
-   to review.
+1. The user clicks **Run review** and chooses what code to review, or the
+   implementer calls `review_start` with the user's request and code scope.
 2. Each reviewer on the canvas runs as a subagent. Reviewers with no
    connection between them run at the same time. A connection from A to B
    runs B after A succeeds.
@@ -26,8 +26,17 @@ or start a new Copilot session after updates.
    `review_resolve_comment`.
 
 The canvas shows the graph with live progress on each reviewer, and every
-comment: open comments first, resolved comments last. **Run review** repeats
-the last request.
+comment: open comments first, resolved comments last.
+
+**Run review** opens a popover, including before the first review:
+
+- **Uncommitted changes** reviews staged, unstaged, and untracked files.
+- **Last commit** reviews HEAD without uncommitted changes.
+- **Ask the agent** asks the implementer to choose the scope from the
+  conversation and start the review. It asks the user if the scope is unclear.
+- **Something else** lets the user describe the code and focus of the review.
+
+Choose an option, then confirm. The button is disabled while a review runs.
 
 Preset controls sit below the graph on the left, with **Run review** on the
 right. The **+** button in the graph's bottom-right corner adds a reviewer.

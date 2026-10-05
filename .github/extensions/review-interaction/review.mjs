@@ -204,12 +204,16 @@ export class Review {
         await this.save();
     }
 
-    async start({ request, scope }) {
+    ensureCanStart() {
         if (this.run.status === "running") throw failure("review_busy", "A review is already running.");
+        if (!this.graph.nodes.length) throw failure("no_reviewers", "Add a reviewer on the review canvas first.");
+    }
+
+    async start({ request, scope }) {
+        this.ensureCanStart();
         if (!request?.trim() || !scope?.trim()) {
             throw failure("invalid_request", "Say what the user asked for and which code to review.");
         }
-        if (!this.graph.nodes.length) throw failure("no_reviewers", "Add a reviewer on the review canvas first.");
 
         this.request = { request: request.trim(), scope: scope.trim() };
         this.pass++;
@@ -224,9 +228,13 @@ export class Review {
         );
     }
 
-    async restart() {
-        if (!this.request) throw failure("no_request", "Ask the agent to start the first review.");
-        await this.start(this.request);
+    async askAgent() {
+        this.ensureCanStart();
+        await this.api.notify(
+            "The user selected \"Ask the agent\" on the review canvas. "
+            + "Choose what code to review from this conversation and call review_start with the request and scope. "
+            + "Ask the user if the scope is unclear.",
+        );
     }
 
     async stop() {

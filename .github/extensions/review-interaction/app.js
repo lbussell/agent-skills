@@ -14,6 +14,8 @@ const RUN_TEXT = {
 const $ = (selector) => document.querySelector(selector);
 const ui = {
     status: $("#status"), run: $("#run"), stop: $("#stop"), request: $("#request"),
+    runPopover: $("#run-popover"), runForm: $("#run-form"), runOptions: $("#run-options"),
+    runText: $("#run-text"), runTextLabel: $("#run-text-label"), runSubmit: $("#run-submit"),
     runError: $("#run-error"), error: $("#error"),
     preset: $("#preset"), save: $("#save"), saveAs: $("#save-as"),
     graph: $("#graph"), edges: $("#edges"), edgeLayer: $("#edge-layer"), add: $("#add"), pencil: $("#pencil-icon"),
@@ -30,6 +32,8 @@ let state;          // The latest snapshot from the extension.
 let selectedId;     // The reviewer shown in the inspector.
 let drag;           // A node move or a new connection in progress.
 let presetOptions;  // The preset list as last drawn, so it is only rebuilt when it changes.
+let submittingReview = false;
+let runNotice = "";
 
 function el(tag, attributes = {}, ...children) {
     const element = document.createElement(tag);
@@ -103,10 +107,12 @@ function render() {
 
 function renderHeader() {
     const { run, request } = state;
-    ui.status.textContent = RUN_TEXT[run.status](run);
+    ui.status.textContent = runNotice || RUN_TEXT[run.status](run);
     ui.status.hidden = !ui.status.textContent;
-    ui.run.disabled = run.status === "running" || !request;
-    ui.run.title = request ? "Run the reviewers again with the last request." : "Ask the agent to start the first review.";
+    ui.run.disabled = run.status === "running" || submittingReview;
+    ui.run.title = "Choose what code to review.";
+    ui.runOptions.disabled = ui.run.disabled;
+    ui.runSubmit.disabled = ui.run.disabled;
     ui.stop.hidden = run.status !== "running";
     ui.request.hidden = !request;
     ui.request.textContent = request ? `Request: ${request.request} · Code: ${request.scope}` : "";
@@ -515,12 +521,43 @@ function renderComments() {
 
 // --- Run ---
 
-ui.run.addEventListener("click", () => act("POST", "run"));
+ui.runOptions.addEventListener("change", (event) => {
+    if (event.target.name !== "target") return;
+    const target = new FormData(ui.runForm).get("target");
+    const custom = target === "custom";
+    ui.runTextLabel.hidden = !custom;
+    ui.runText.disabled = !custom;
+    ui.runText.required = custom;
+    ui.runSubmit.textContent = target === "agent" ? "Ask the agent" : "Run review";
+    if (custom) ui.runText.focus();
+});
+
+ui.runForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (submittingReview || state.run.status === "running") return;
+    const target = new FormData(ui.runForm).get("target");
+    const scope = target === "custom" ? ui.runText.value.trim() : target;
+    submittingReview = true;
+    runNotice = "";
+    renderHeader();
+
+    const accepted = await (target === "agent"
+        ? act("POST", "run/ask")
+        : act("POST", "run", { request: "Review the selected code and report actionable findings.", scope }));
+    submittingReview = false;
+    if (accepted) {
+        ui.runPopover.hidePopover();
+        if (target === "agent" && state.run.status !== "running") runNotice = "Asked the agent to choose what to review.";
+    }
+    renderHeader();
+});
+
 ui.stop.addEventListener("click", () => act("POST", "stop"));
 
 const events = new EventSource("events");
 events.addEventListener("message", (event) => {
     state = JSON.parse(event.data);
+    if (state.run.status === "running") runNotice = "";
     render();
 });
 events.addEventListener("error", () => {

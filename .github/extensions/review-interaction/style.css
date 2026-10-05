@@ -22,7 +22,7 @@ section { border-top: 1px solid var(--border-color-default, #d1d9e0); margin-top
 #request { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 [hidden] { display: none !important; }
 
-button, input, select {
+button, input, select, textarea {
     font: inherit;
     color: inherit;
     border: 1px solid var(--border-color-default, #d1d9e0);
@@ -46,6 +46,34 @@ label.inline { display: flex; align-items: center; gap: 6px; }
 #preset { min-width: 140px; }
 #preset.modified { font-weight: var(--font-weight-semibold, 600); }
 #preset option { font-weight: normal; }
+
+/* Review picker */
+#run { anchor-name: --run-button; }
+#run-popover {
+    position-anchor: --run-button;
+    inset: auto;
+    top: anchor(bottom);
+    right: 16px;
+    position-try-fallbacks: flip-block;
+    box-sizing: border-box;
+    width: min(320px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    margin: 8px 0;
+    padding: 16px;
+    border: 1px solid var(--border-color-default, #d1d9e0);
+    border-radius: 8px;
+    background: var(--background-color-default, #ffffff);
+    color: var(--text-color-default, #1f2328);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+}
+#run-options { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; }
+#run-options legend { margin-bottom: 8px; }
+#run-options label { display: flex; align-items: center; gap: 8px; }
+#run-options input { margin: 0; }
+#run-options #run-text-label { display: grid; }
+#run-text { box-sizing: border-box; width: 100%; resize: vertical; }
+#run-popover .buttons { justify-content: flex-end; margin-top: 16px; }
 
 /* Graph */
 .graph-frame { position: relative; }

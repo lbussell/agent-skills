@@ -38,7 +38,7 @@
         </div>
         <div class="buttons run-controls">
           <button id="stop" type="button" hidden>Stop</button>
-          <button id="run" type="button" class="primary" disabled>Run review</button>
+          <button id="run" type="button" class="primary" popovertarget="run-popover" disabled>Run review</button>
         </div>
       </div>
       <p id="status" role="status" aria-live="polite">Connecting...</p>
@@ -67,6 +67,26 @@
       <ol id="comments"></ol>
     </section>
   </main>
+
+  <div id="run-popover" popover aria-labelledby="run-heading">
+    <form id="run-form">
+      <h3 id="run-heading">What should be reviewed?</h3>
+      <fieldset id="run-options">
+        <legend class="muted">Choose the code to review</legend>
+        <label><input type="radio" name="target" value="Uncommitted changes (staged, unstaged, and untracked files)" checked> Uncommitted changes</label>
+        <label><input type="radio" name="target" value="Last commit (HEAD), excluding uncommitted changes"> Last commit</label>
+        <label><input type="radio" name="target" value="agent"> Ask the agent</label>
+        <label><input type="radio" name="target" value="custom"> Something else</label>
+        <label id="run-text-label" hidden>What to review
+          <textarea id="run-text" name="text" rows="3" placeholder="Files, a commit, or a description of what to review" disabled></textarea>
+        </label>
+      </fieldset>
+      <div class="buttons">
+        <button type="button" popovertarget="run-popover" popovertargetaction="hide">Cancel</button>
+        <button id="run-submit" type="submit" class="primary">Run review</button>
+      </div>
+    </form>
+  </div>
 
   <dialog id="save-as-dialog" aria-labelledby="save-as-heading">
     <form method="dialog">
