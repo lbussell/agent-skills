@@ -5,7 +5,8 @@ $ErrorActionPreference = 'Stop'
 
 $sourceDirectory = Join-Path $PSScriptRoot 'agents'
 $skillsDirectory = Join-Path $PSScriptRoot 'skills'
-$extensionSource = Join-Path $PSScriptRoot '.github\extensions\review-interaction'
+$extensionSource = Join-Path $PSScriptRoot 'extensions\review-workflow'
+$legacyExtensionSource = Join-Path $PSScriptRoot '.github\extensions\review-workflow'
 $copilotHome = if ($env:COPILOT_HOME) {
     $env:COPILOT_HOME
 } else {
@@ -13,7 +14,7 @@ $copilotHome = if ($env:COPILOT_HOME) {
 }
 $destinationDirectory = Join-Path $copilotHome 'agents'
 $extensionsDirectory = Join-Path $copilotHome 'extensions'
-$extensionDestination = Join-Path $extensionsDirectory 'review-interaction'
+$extensionDestination = Join-Path $extensionsDirectory 'review-workflow'
 
 if (-not (Test-Path -LiteralPath $sourceDirectory -PathType Container)) {
     throw "Agent source directory not found: $sourceDirectory"
@@ -37,12 +38,19 @@ Get-Command copilot -ErrorAction Stop | Out-Null
 
 New-Item -ItemType Directory -Path $extensionsDirectory -Force | Out-Null
 $existingExtension = Get-ChildItem -LiteralPath $extensionsDirectory -Force |
-    Where-Object { $_.Name -eq 'review-interaction' }
+    Where-Object { $_.Name -eq 'review-workflow' }
 
 if ($existingExtension) {
-    if ($existingExtension.LinkType -notin @('Junction', 'SymbolicLink') -or $existingExtension.Target -ne $extensionSource) {
+    if ($existingExtension.LinkType -in @('Junction', 'SymbolicLink') -and $existingExtension.Target -eq $legacyExtensionSource) {
+        Remove-Item -LiteralPath $extensionDestination -Force
+        $existingExtension = $null
+        Write-Host "Removed legacy review extension link"
+    } elseif ($existingExtension.LinkType -notin @('Junction', 'SymbolicLink') -or $existingExtension.Target -ne $extensionSource) {
         throw "Review extension destination already exists: $extensionDestination. Move it aside before running this installer."
     }
+}
+
+if ($existingExtension) {
     Write-Host "Review extension already linked to $extensionSource"
 } else {
     New-Item -ItemType Junction -Path $extensionDestination -Target $extensionSource | Out-Null

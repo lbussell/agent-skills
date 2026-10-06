@@ -4,7 +4,7 @@ A collection of my skills for AI coding agents.
 
 ## Install
 
-Run `.\install.ps1` to install the skills, agent profiles, and review canvas
+Run `.\install.ps1` to install the skills, agent profiles, and review workflow
 for your user. Copilot CLI must be on your `PATH`.
 
 Keep this checkout at the same path. After updating it, rerun the installer
