@@ -71,8 +71,7 @@ This list is not comprehensive, just a starting point.
 
 ### Testing
 
-Did the user specifically ask for tests?
-If not, then suggest that they be removed - especially if the tests provide low value.
+Consider whether the user specifically asked for tests.
 
 Avoid asserting:
 
