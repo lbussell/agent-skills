@@ -1,22 +1,16 @@
 ---
 name: review-loop
-description: Runs repeated implementation reviews with the review workflow. Use only when explicitly asked to simplify an implementation through a review loop.
+description: Review and simplify code through repeated review cycles.
 ---
 
-Review your implementation for unnecessary complexity.
+Run the `review` dynamic workflow.
 
-## Workflow
-
-Run the `review` dynamic workflow yourself.
-Do not delegate the review loop or fixes to another agent.
-
-Pass:
-
-- `userRequest`: The user's original request.
-- `codeToReview`: Exactly one of:
+Pass in:
+- The user's original request.
+- What code to review. Choose one of:
   - All unstaged changes
   - Commit `<sha>`
   - A list of specific files or changes
 
 Address the workflow's actionable comments directly, then run it again.
-Stop when it returns no comments or after three review cycles.
+Stop when it returns no comments or after 5 review cycles.
