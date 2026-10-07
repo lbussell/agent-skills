@@ -3,7 +3,6 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
-$sourceDirectory = Join-Path $PSScriptRoot 'agents'
 $skillsDirectory = Join-Path $PSScriptRoot 'skills'
 $extensionSource = Join-Path $PSScriptRoot 'extensions\review-workflow'
 $legacyExtensionSource = Join-Path $PSScriptRoot '.github\extensions\review-workflow'
@@ -12,19 +11,8 @@ $copilotHome = if ($env:COPILOT_HOME) {
 } else {
     Join-Path $HOME '.copilot'
 }
-$destinationDirectory = Join-Path $copilotHome 'agents'
 $extensionsDirectory = Join-Path $copilotHome 'extensions'
 $extensionDestination = Join-Path $extensionsDirectory 'review-workflow'
-
-if (-not (Test-Path -LiteralPath $sourceDirectory -PathType Container)) {
-    throw "Agent source directory not found: $sourceDirectory"
-}
-
-$agents = @(Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.md' -File)
-
-if ($agents.Count -eq 0) {
-    throw "No agent profiles found in: $sourceDirectory"
-}
 
 if (-not (Test-Path -LiteralPath $skillsDirectory -PathType Container)) {
     throw "Skill source directory not found: $skillsDirectory"
@@ -56,22 +44,6 @@ if ($existingExtension) {
     New-Item -ItemType Junction -Path $extensionDestination -Target $extensionSource | Out-Null
     Write-Host "Linked $extensionDestination to $extensionSource"
 }
-
-New-Item -ItemType Directory -Path $destinationDirectory -Force | Out-Null
-
-foreach ($agent in $agents) {
-    $destinationName = if ($agent.Name.EndsWith('.agent.md')) {
-        $agent.Name
-    } else {
-        "$($agent.BaseName).agent.md"
-    }
-    $destination = Join-Path $destinationDirectory $destinationName
-
-    Copy-Item -LiteralPath $agent.FullName -Destination $destination -Force
-    Write-Host "Installed $destinationName"
-}
-
-Write-Host "Installed $($agents.Count) agent profile(s) to $destinationDirectory"
 
 copilot skill add $skillsDirectory
 if ($LASTEXITCODE -ne 0) {
