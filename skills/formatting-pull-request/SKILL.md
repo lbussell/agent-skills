@@ -46,3 +46,9 @@ This PR <present tense description of what changed and why>
 ```
 
 Delete unused parts of the template.
+
+## Review
+
+Before creating the pull request, propose `Title` (`text`), `Body` (`text`), and `Submit as draft` (`checkbox`) in the `outbox` canvas.
+Wait for the user's response in Outbox, then create the pull request with the approved values.
+

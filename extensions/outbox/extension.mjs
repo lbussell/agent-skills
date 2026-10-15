@@ -293,10 +293,6 @@ async function startServer(sessionId, instanceId) {
 
 session = await joinSession({
     hooks: {
-        onSessionStart: async () => ({
-            additionalContext:
-                "When proposing text or options for the user to review and edit before submitting (such as a pull request or issue title, body, and draft checkbox), open the `outbox` canvas via `open_canvas` with `canvasId: \"outbox\"`, `instanceId: \"outbox\"`, and `input: { name: \"<unique-name>\", inputs: [...] }` (or call the `propose` canvas action if already open), then wait for the user to Approve or Decline in Outbox. Every proposal must have a unique `name` that does not collide with any currently pending proposal.",
-        }),
         onPreToolUse: async (input) => {
             if (
                 input.toolName === "open_canvas" &&
