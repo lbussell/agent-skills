@@ -5,19 +5,11 @@ description: Writes concise prompts for other agents. Use before starting or mes
 
 Treat the receiving agent as a capable peer.
 
-- State the goal and the user's requirements.
-- Include context the agent needs but does not already have.
-- Let the agent choose its implementation and investigate details.
-- Do not turn your anticipated problems into extra requirements.
-- For follow-ups, send the new information rather than repeating the task.
+- State the task in the context of the user's goals.
+- Give some general direction, but do not over-specify the solution.
+- Do not turn anticipated problems into extra requirements.
 
-Assume the agent will do the right thing. Give additional guidance when
-there is evidence of a misunderstanding, not to prevent every imaginable
-mistake.
+The more conditions and requirements you impose on the agent in the prompt, the worse agent performance becomes.
 
-Example:
-
-Create a prototype canvas with a button that starts a real review
-subagent. I want to see how the subagent appears in the app and how the
-main agent responds. Review content doesn't matter yet. Build it and
-open the canvas so I can try it.
+Assume the agent will do the right thing.
+Give additional guidance when there is evidence of a misunderstanding, not to prevent every imaginable mistake.
