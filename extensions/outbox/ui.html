@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Outbox</title>
+        <link rel="icon" href="data:," />
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                background: var(--background-color-muted, #f6f8fa);
+                color: var(--text-color-default, #1f2328);
+                font-family: var(
+                    --font-sans,
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    sans-serif
+                );
+            }
+
+            .shell {
+                width: min(100%, 760px);
+                margin-inline: auto;
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .card {
+                display: flex;
+                flex-direction: column;
+                border: 1px solid var(--border-color-default, #d1d9e0);
+                border-radius: 6px;
+                background: var(--background-color-default, #ffffff);
+                overflow: hidden;
+            }
+
+            .fields {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .field {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .field-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                min-height: 20px;
+            }
+
+            .field-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                color: var(--text-color-default, #1f2328);
+                font-weight: var(--font-weight-semibold, 600);
+                user-select: none;
+            }
+
+            .field-label svg {
+                color: var(--text-color-muted, #59636e);
+                flex-shrink: 0;
+            }
+
+            .text-block {
+                width: 100%;
+                min-height: 34px;
+                padding: 6px 8px;
+                border: 1px solid var(--border-color-default, #d1d9e0);
+                border-radius: 6px;
+                background: var(--background-color-default, #ffffff);
+                color: var(--text-color-default, #1f2328);
+                font: inherit;
+                resize: vertical;
+                overflow-y: hidden;
+            }
+
+            .text-block.multiline {
+                min-height: 120px;
+            }
+
+            .text-block[readonly] {
+                color: var(--text-color-muted, #59636e);
+                cursor: default;
+            }
+
+            .choice-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px;
+                min-height: 32px;
+            }
+
+            .choice-controls {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .btn-group {
+                display: inline-flex;
+                border: 1px solid var(--border-color-button-default-rest, var(--border-color-default, #d1d9e0));
+                border-radius: 6px;
+                overflow: hidden;
+            }
+
+            .btn-group-item {
+                border: 0;
+                border-right: 1px solid var(--border-color-button-default-rest, var(--border-color-default, #d1d9e0));
+                border-radius: 0;
+                padding: 4px 10px;
+                background: var(--background-color-button-default-rest, var(--background-color-muted, #f6f8fa));
+                color: var(--text-color-default, #1f2328);
+            }
+
+            .btn-group-item:last-child {
+                border-right: 0;
+            }
+
+            .btn-group-item[aria-pressed="true"] {
+                background: var(--true-color-blue, #0969da);
+                color: var(--color-white, #ffffff);
+            }
+
+            .btn-group-item[aria-pressed="true"]:hover:not(:disabled) {
+                background: var(--true-color-blue, #0969da);
+                filter: brightness(0.95);
+            }
+
+            .footer {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 10px 12px;
+                border-top: 1px solid var(--border-color-default, #d1d9e0);
+                background: var(--background-color-default, #ffffff);
+            }
+
+            .decline-box {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .decline-textarea {
+                width: 100%;
+                min-height: 60px;
+                padding: 6px 8px;
+                border: 1px solid var(--border-color-default, #d1d9e0);
+                border-radius: 6px;
+                background: var(--background-color-default, #ffffff);
+                color: var(--text-color-default, #1f2328);
+                font: inherit;
+                resize: vertical;
+            }
+
+            .actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .spacer {
+                flex: 1 1 auto;
+            }
+
+            button {
+                font: inherit;
+                font-weight: var(--font-weight-medium, 500);
+                border-radius: 6px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 6px 12px;
+                border: 1px solid var(--border-color-button-default-rest, var(--border-color-default, #d1d9e0));
+                background: var(--background-color-button-default-rest, var(--background-color-muted, #f6f8fa));
+                color: var(--text-color-button-default-rest, var(--text-color-default, #1f2328));
+                white-space: nowrap;
+            }
+
+            button:hover:not(:disabled) {
+                background: var(--background-color-button-default-hover, var(--background-color-neutral-muted, #eff2f5));
+                border-color: var(--border-color-button-default-hover, var(--border-color-default, #d1d9e0));
+            }
+
+            button:active:not(:disabled) {
+                transform: translateY(0.5px);
+            }
+
+            button:disabled {
+                opacity: 0.55;
+                cursor: default;
+            }
+
+            .btn-approve {
+                background: var(--true-color-blue, #0969da);
+                border-color: var(--true-color-blue, #0969da);
+                color: var(--color-white, #ffffff);
+            }
+
+            .btn-approve:hover:not(:disabled) {
+                background: var(--true-color-blue, #0969da);
+                border-color: var(--true-color-blue, #0969da);
+                filter: brightness(0.95);
+            }
+
+            .btn-decline-confirm {
+                background: var(--true-color-red, #cf222e);
+                border-color: var(--true-color-red, #cf222e);
+                color: var(--color-white, #ffffff);
+            }
+
+            .btn-decline-confirm:hover:not(:disabled) {
+                background: var(--true-color-red, #cf222e);
+                border-color: var(--true-color-red, #cf222e);
+                filter: brightness(0.95);
+            }
+
+            .btn-decline:hover:not(:disabled) {
+                color: var(--true-color-red, #cf222e);
+                border-color: var(--true-color-red, #cf222e);
+            }
+
+            .btn-subtle {
+                padding: 3px 8px;
+                background: transparent;
+                border-color: transparent;
+                color: var(--text-color-muted, #59636e);
+            }
+
+            .btn-subtle:hover:not(:disabled) {
+                background: var(--background-color-control-transparent-hover, var(--background-color-neutral-muted, #eff2f5));
+                border-color: transparent;
+                color: var(--text-color-default, #1f2328);
+            }
+
+            .icon-btn {
+                padding: 2px 6px;
+                background: transparent;
+                border-color: transparent;
+                color: var(--text-color-muted, #59636e);
+                gap: 4px;
+            }
+
+            .icon-btn:hover:not(:disabled) {
+                background: var(--background-color-control-transparent-hover, var(--background-color-neutral-muted, #eff2f5));
+                border-color: transparent;
+                color: var(--text-color-default, #1f2328);
+            }
+
+            .status-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                width: 100%;
+            }
+
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-weight: var(--font-weight-semibold, 600);
+                min-width: 0;
+            }
+
+            .status-badge.approved {
+                color: var(--true-color-blue, #0969da);
+            }
+
+            .status-badge.declined {
+                color: var(--true-color-red, #cf222e);
+            }
+
+            .status-reason {
+                color: var(--text-color-muted, #59636e);
+                font-weight: normal;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .empty {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                padding: 20px 12px;
+                color: var(--text-color-muted, #59636e);
+            }
+
+            .error-banner {
+                padding: 6px 8px;
+                border: 1px solid var(--true-color-red, #cf222e);
+                border-radius: 6px;
+                background: var(--true-color-red-muted, rgba(207, 34, 46, 0.08));
+                color: var(--true-color-red, #cf222e);
+            }
+
+            button:focus-visible,
+            .text-block:focus-visible,
+            .decline-textarea:focus-visible {
+                outline: 2px solid var(--color-focus-outline, #0969da);
+                outline-offset: 1px;
+            }
+        </style>
+    </head>
+    <body>
+        <main id="app" class="shell" aria-live="polite"></main>
+        <script type="module">
+            const ICONS = {
+                text: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.75 3a.75.75 0 0 0 0 1.5h12.5a.75.75 0 0 0 0-1.5H1.75Zm0 3.5a.75.75 0 0 0 0 1.5h12.5a.75.75 0 0 0 0-1.5H1.75Zm0 3.5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z"/></svg>`,
+                check: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>`,
+                x: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>`,
+                reset: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z"/></svg>`,
+                edit: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm.176 4.823L9.75 4.81l-6.286 6.287a.253.253 0 0 0-.064.108l-.558 1.953 1.953-.558a.253.253 0 0 0 .108-.064Zm1.238-3.763a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354Z"/></svg>`,
+                inbox: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2.8 2.06A1.75 1.75 0 0 1 4.41 1h7.18c.7 0 1.333.417 1.61 1.06l2.74 6.395c.04.093.06.194.06.295v4.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25v-4.5c0-.101.02-.202.06-.295Zm1.61.44a.25.25 0 0 0-.23.152L1.887 8H4.75a.75.75 0 0 1 .6.3L6.625 10h2.75l1.275-1.7a.75.75 0 0 1 .6-.3h2.863L11.82 2.652a.25.25 0 0 0-.23-.152Zm10.09 7h-2.875l-1.275 1.7a.75.75 0 0 1-.6.3h-3.5a.75.75 0 0 1-.6-.3L4.375 9.5H1.5v3.75c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25Z"/></svg>`,
+            };
+
+            const app = document.getElementById("app");
+            let proposals = [];
+            const cardUiState = new Map();
+
+            function getCardUi(proposalId) {
+                let ui = cardUiState.get(proposalId);
+                if (!ui) {
+                    ui = { declineOpen: false, busy: false, errorMessage: "", draftTimer: null };
+                    cardUiState.set(proposalId, ui);
+                }
+                return ui;
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+            }
+
+            function autoResize(textarea) {
+                const scrollTop = document.scrollingElement ? document.scrollingElement.scrollTop : 0;
+                textarea.style.height = "auto";
+                const minHeight = textarea.classList.contains("multiline") ? 120 : 32;
+                textarea.style.height = `${Math.max(minHeight, textarea.scrollHeight + 2)}px`;
+                if (document.scrollingElement) {
+                    document.scrollingElement.scrollTop = scrollTop;
+                }
+            }
+
+            function collectValues(proposal) {
+                const values = {};
+                for (const input of proposal.inputs) {
+                    values[input.id] = input.value;
+                }
+                return values;
+            }
+
+            function scheduleDraftSave(proposal) {
+                const ui = getCardUi(proposal.id);
+                if (ui.draftTimer) clearTimeout(ui.draftTimer);
+                ui.draftTimer = setTimeout(async () => {
+                    ui.draftTimer = null;
+                    try {
+                        await fetch("/api/draft", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                proposalId: proposal.id,
+                                values: collectValues(proposal),
+                                declineReason: proposal.declineReason ?? "",
+                            }),
+                        });
+                    } catch {
+                        // Ignore transient draft autosave failure
+                    }
+                }, 200);
+            }
+
+            async function postCardAction(proposalId, url, payload) {
+                const ui = getCardUi(proposalId);
+                if (ui.draftTimer) {
+                    clearTimeout(ui.draftTimer);
+                    ui.draftTimer = null;
+                }
+                ui.busy = true;
+                ui.errorMessage = "";
+                const existingCard = app.querySelector(`.card[data-proposal-id="${CSS.escape(proposalId)}"]`);
+                const currentProposal = proposals.find((item) => item.id === proposalId);
+                if (existingCard && currentProposal) {
+                    renderCardFooter(existingCard, currentProposal);
+                    setCardControlsDisabled(existingCard, true);
+                }
+                try {
+                    const res = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ proposalId, ...(payload ?? {}) }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data?.message || "Action failed.");
+                    }
+                    ui.busy = false;
+                    if (Array.isArray(data?.proposals)) {
+                        proposals = data.proposals;
+                        reconcileCards();
+                    }
+                } catch (err) {
+                    ui.busy = false;
+                    ui.errorMessage = err?.message || "Action failed.";
+                    const card = app.querySelector(`.card[data-proposal-id="${CSS.escape(proposalId)}"]`);
+                    const prop = proposals.find((item) => item.id === proposalId);
+                    if (card && prop) {
+                        setCardControlsDisabled(card, false);
+                        renderCardFooter(card, prop);
+                    }
+                }
+            }
+
+            function setCardControlsDisabled(cardEl, disabled) {
+                for (const control of cardEl.querySelectorAll("textarea, button")) {
+                    control.disabled = disabled;
+                }
+            }
+
+            function updateFieldControlState(cardEl, proposal, fieldId) {
+                const input = proposal.inputs.find((item) => item.id === fieldId);
+                if (!input) return;
+                const resetBtn = cardEl.querySelector(`[data-reset-field="${CSS.escape(fieldId)}"]`);
+                if (resetBtn) {
+                    resetBtn.hidden = input.value === input.originalValue;
+                }
+                const resetAllBtn = cardEl.querySelector("[data-action='reset-all']");
+                if (resetAllBtn) {
+                    const anyModified = proposal.inputs.some((item) => item.value !== item.originalValue);
+                    resetAllBtn.hidden = !anyModified;
+                }
+            }
+
+            function renderCardFooter(cardEl, proposal) {
+                const ui = getCardUi(proposal.id);
+                const anyModified = proposal.inputs.some((item) => item.value !== item.originalValue);
+                const footerEl = cardEl.querySelector(".footer");
+                if (!footerEl) return;
+
+                const declineSection = ui.declineOpen
+                    ? `
+                        <div class="decline-box">
+                            <textarea
+                                class="decline-textarea"
+                                rows="2"
+                                placeholder="Reason for declining..."
+                                ${ui.busy ? "disabled" : ""}
+                            >${escapeHtml(proposal.declineReason ?? "")}</textarea>
+                        </div>
+                        <div class="actions">
+                            <button type="button" class="btn-decline-confirm" data-action="confirm-decline" ${ui.busy ? "disabled" : ""}>
+                                ${ICONS.x}
+                                <span>Decline</span>
+                            </button>
+                            <button type="button" data-action="cancel-decline" ${ui.busy ? "disabled" : ""}>
+                                <span>Cancel</span>
+                            </button>
+                        </div>
+                    `
+                    : `
+                        <div class="actions">
+                            <button type="button" class="btn-approve" data-action="approve" ${ui.busy ? "disabled" : ""}>
+                                ${ICONS.check}
+                                <span>Approve</span>
+                            </button>
+                            <button type="button" class="btn-decline" data-action="open-decline" ${ui.busy ? "disabled" : ""}>
+                                ${ICONS.x}
+                                <span>Decline</span>
+                            </button>
+                            <span class="spacer"></span>
+                            <button type="button" class="btn-subtle" data-action="reset-all" ${anyModified ? "" : "hidden"} ${ui.busy ? "disabled" : ""}>
+                                ${ICONS.reset}
+                                <span>Reset</span>
+                            </button>
+                        </div>
+                    `;
+
+                footerEl.innerHTML = `
+                    ${ui.errorMessage ? `<div class="error-banner">${escapeHtml(ui.errorMessage)}</div>` : ""}
+                    ${declineSection}
+                `;
+
+                const declineInput = footerEl.querySelector(".decline-textarea");
+                if (declineInput) {
+                    if (!ui.busy) {
+                        declineInput.focus();
+                        declineInput.selectionStart = declineInput.value.length;
+                    }
+                    declineInput.addEventListener("input", () => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        current.declineReason = declineInput.value;
+                        scheduleDraftSave(current);
+                    });
+                    declineInput.addEventListener("keydown", (event) => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                            event.preventDefault();
+                            postCardAction(current.id, "/api/decide", {
+                                decision: "declined",
+                                values: collectValues(current),
+                                declineReason: declineInput.value,
+                            });
+                        } else if (event.key === "Escape") {
+                            event.preventDefault();
+                            ui.declineOpen = false;
+                            renderCardFooter(cardEl, current);
+                        }
+                    });
+                }
+
+                const approveBtn = footerEl.querySelector("[data-action='approve']");
+                if (approveBtn) {
+                    approveBtn.addEventListener("click", () => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        postCardAction(current.id, "/api/decide", {
+                            decision: "approved",
+                            values: collectValues(current),
+                        });
+                    });
+                }
+
+                const openDeclineBtn = footerEl.querySelector("[data-action='open-decline']");
+                if (openDeclineBtn) {
+                    openDeclineBtn.addEventListener("click", () => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        ui.declineOpen = true;
+                        renderCardFooter(cardEl, current);
+                    });
+                }
+
+                const confirmDeclineBtn = footerEl.querySelector("[data-action='confirm-decline']");
+                if (confirmDeclineBtn) {
+                    confirmDeclineBtn.addEventListener("click", () => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        const reasonEl = footerEl.querySelector(".decline-textarea");
+                        postCardAction(current.id, "/api/decide", {
+                            decision: "declined",
+                            values: collectValues(current),
+                            declineReason: reasonEl ? reasonEl.value : current.declineReason,
+                        });
+                    });
+                }
+
+                const cancelDeclineBtn = footerEl.querySelector("[data-action='cancel-decline']");
+                if (cancelDeclineBtn) {
+                    cancelDeclineBtn.addEventListener("click", () => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        ui.declineOpen = false;
+                        renderCardFooter(cardEl, current);
+                    });
+                }
+
+                const resetAllBtn = footerEl.querySelector("[data-action='reset-all']");
+                if (resetAllBtn) {
+                    resetAllBtn.addEventListener("click", () => {
+                        postCardAction(proposal.id, "/api/reset", {});
+                    });
+                }
+            }
+
+            function createCardElement(proposal) {
+                const ui = getCardUi(proposal.id);
+                const cardEl = document.createElement("section");
+                cardEl.className = "card";
+                cardEl.setAttribute("data-proposal-id", proposal.id);
+                cardEl.setAttribute("data-fingerprint", proposal.fingerprint ?? "");
+
+                const fieldsHtml = proposal.inputs
+                    .map((input) => {
+                        const fieldDomId = `field-${escapeHtml(proposal.id)}-${escapeHtml(input.id)}`;
+                        const modified = input.value !== input.originalValue;
+                        const resetBtnHtml = `<button type="button" class="icon-btn" data-reset-field="${escapeHtml(input.id)}" title="Reset to proposed value" ${modified ? "" : "hidden"} ${ui.busy ? "disabled" : ""}>${ICONS.reset}</button>`;
+
+                        if (input.type === "checkbox") {
+                            const isYes = input.value === true;
+                            const isNo = input.value === false;
+                            const isDecline = input.value === "decline";
+                            return `
+                                <div class="choice-row">
+                                    <span class="field-label" id="${fieldDomId}-label">
+                                        <span>${escapeHtml(input.label)}</span>
+                                    </span>
+                                    <div class="choice-controls">
+                                        <div class="btn-group" role="group" aria-labelledby="${fieldDomId}-label">
+                                            <button
+                                                type="button"
+                                                class="btn-group-item"
+                                                data-choice-field="${escapeHtml(input.id)}"
+                                                data-choice-value="yes"
+                                                aria-pressed="${isYes ? "true" : "false"}"
+                                                ${ui.busy ? "disabled" : ""}
+                                            >
+                                                ${ICONS.check}
+                                                <span>Yes</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn-group-item"
+                                                data-choice-field="${escapeHtml(input.id)}"
+                                                data-choice-value="decline"
+                                                aria-pressed="${isDecline ? "true" : "false"}"
+                                                ${ui.busy ? "disabled" : ""}
+                                            >
+                                                <span>Decline</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn-group-item"
+                                                data-choice-field="${escapeHtml(input.id)}"
+                                                data-choice-value="no"
+                                                aria-pressed="${isNo ? "true" : "false"}"
+                                                ${ui.busy ? "disabled" : ""}
+                                            >
+                                                ${ICONS.x}
+                                                <span>No</span>
+                                            </button>
+                                        </div>
+                                        ${resetBtnHtml}
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        const isMultiline =
+                            String(input.originalValue ?? "").includes("\n") ||
+                            String(input.value ?? "").includes("\n") ||
+                            String(input.value ?? "").length > 100 ||
+                            /body|description|content|notes|details/i.test(input.label);
+
+                        return `
+                            <div class="field">
+                                <div class="field-header">
+                                    <label class="field-label" for="${fieldDomId}">
+                                        ${ICONS.text}
+                                        <span>${escapeHtml(input.label)}</span>
+                                    </label>
+                                    ${resetBtnHtml}
+                                </div>
+                                <textarea
+                                    id="${fieldDomId}"
+                                    class="text-block ${isMultiline ? "multiline" : ""}"
+                                    rows="${isMultiline ? 6 : 1}"
+                                    data-field-id="${escapeHtml(input.id)}"
+                                    ${ui.busy ? "disabled" : ""}
+                                >${escapeHtml(input.value)}</textarea>
+                            </div>
+                        `;
+                    })
+                    .join("");
+
+                cardEl.innerHTML = `
+                    <div class="fields">${fieldsHtml}</div>
+                    <footer class="footer"></footer>
+                `;
+
+                renderCardFooter(cardEl, proposal);
+
+                for (const textarea of cardEl.querySelectorAll(".text-block")) {
+                    autoResize(textarea);
+                    textarea.addEventListener("input", () => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        const fieldId = textarea.getAttribute("data-field-id");
+                        const item = current.inputs.find((entry) => entry.id === fieldId);
+                        if (item) {
+                            item.value = textarea.value;
+                            autoResize(textarea);
+                            updateFieldControlState(cardEl, current, fieldId);
+                            scheduleDraftSave(current);
+                        }
+                    });
+                    textarea.addEventListener("keydown", (event) => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !ui.declineOpen) {
+                            event.preventDefault();
+                            postCardAction(current.id, "/api/decide", {
+                                decision: "approved",
+                                values: collectValues(current),
+                            });
+                        }
+                    });
+                }
+
+                for (const choiceBtn of cardEl.querySelectorAll("[data-choice-field]")) {
+                    choiceBtn.addEventListener("click", () => {
+                        const current = proposals.find((item) => item.id === proposal.id) ?? proposal;
+                        const fieldId = choiceBtn.getAttribute("data-choice-field");
+                        const rawChoice = choiceBtn.getAttribute("data-choice-value");
+                        const item = current.inputs.find((entry) => entry.id === fieldId);
+                        if (!item) return;
+                        item.value =
+                            rawChoice === "yes"
+                                ? true
+                                : rawChoice === "no"
+                                  ? false
+                                  : "decline";
+                        for (const sibling of cardEl.querySelectorAll(`[data-choice-field="${CSS.escape(fieldId)}"]`)) {
+                            sibling.setAttribute(
+                                "aria-pressed",
+                                sibling === choiceBtn ? "true" : "false",
+                            );
+                        }
+                        updateFieldControlState(cardEl, current, fieldId);
+                        scheduleDraftSave(current);
+                    });
+                }
+
+                for (const resetBtn of cardEl.querySelectorAll("[data-reset-field]")) {
+                    resetBtn.addEventListener("click", () => {
+                        const fieldId = resetBtn.getAttribute("data-reset-field");
+                        postCardAction(proposal.id, "/api/reset", { fieldId });
+                    });
+                }
+
+                return cardEl;
+            }
+
+            function syncCardDomFromState(cardEl, proposal) {
+                for (const input of proposal.inputs ?? []) {
+                    if (input.type === "checkbox") {
+                        const expectedChoice =
+                            input.value === true
+                                ? "yes"
+                                : input.value === false
+                                  ? "no"
+                                  : "decline";
+                        for (const btn of cardEl.querySelectorAll(`[data-choice-field="${CSS.escape(input.id)}"]`)) {
+                            btn.setAttribute(
+                                "aria-pressed",
+                                btn.getAttribute("data-choice-value") === expectedChoice ? "true" : "false",
+                            );
+                        }
+                    } else {
+                        const textarea = cardEl.querySelector(`textarea[data-field-id="${CSS.escape(input.id)}"]`);
+                        if (textarea && document.activeElement !== textarea && textarea.value !== input.value) {
+                            textarea.value = input.value;
+                            autoResize(textarea);
+                        }
+                    }
+                    updateFieldControlState(cardEl, proposal, input.id);
+                }
+
+                const declineInput = cardEl.querySelector(".decline-textarea");
+                if (
+                    declineInput &&
+                    document.activeElement !== declineInput &&
+                    declineInput.value !== (proposal.declineReason ?? "")
+                ) {
+                    declineInput.value = proposal.declineReason ?? "";
+                }
+            }
+
+            function reconcileCards() {
+                if (!Array.isArray(proposals) || proposals.length === 0) {
+                    cardUiState.clear();
+                    if (!app.querySelector(".empty")) {
+                        app.innerHTML = `<section class="card"><div class="empty">${ICONS.inbox}<span>No pending proposals</span></div></section>`;
+                    }
+                    return;
+                }
+
+                const emptyCard = app.querySelector(".card:not([data-proposal-id])");
+                if (emptyCard) {
+                    emptyCard.remove();
+                }
+
+                const activeIds = new Set(proposals.map((item) => item.id));
+                for (const existing of app.querySelectorAll(".card[data-proposal-id]")) {
+                    const id = existing.getAttribute("data-proposal-id");
+                    if (!activeIds.has(id)) {
+                        const ui = cardUiState.get(id);
+                        if (ui?.draftTimer) clearTimeout(ui.draftTimer);
+                        cardUiState.delete(id);
+                        existing.remove();
+                    }
+                }
+
+                for (const proposal of proposals) {
+                    const existing = app.querySelector(`.card[data-proposal-id="${CSS.escape(proposal.id)}"]`);
+                    if (!existing) {
+                        const cardEl = createCardElement(proposal);
+                        app.appendChild(cardEl);
+                        for (const textarea of cardEl.querySelectorAll(".text-block")) {
+                            autoResize(textarea);
+                        }
+                    } else if (existing.getAttribute("data-fingerprint") !== (proposal.fingerprint ?? "")) {
+                        const replacement = createCardElement(proposal);
+                        existing.replaceWith(replacement);
+                        for (const textarea of replacement.querySelectorAll(".text-block")) {
+                            autoResize(textarea);
+                        }
+                    } else {
+                        syncCardDomFromState(existing, proposal);
+                    }
+                }
+            }
+
+            async function init() {
+                let initialUiVersion = null;
+
+                function applyIncomingState(next) {
+                    if (initialUiVersion && next.uiVersion && next.uiVersion !== initialUiVersion) {
+                        window.location.reload();
+                        return;
+                    }
+                    if (!initialUiVersion && next.uiVersion) {
+                        initialUiVersion = next.uiVersion;
+                    }
+                    proposals = Array.isArray(next?.proposals) ? next.proposals : [];
+                    reconcileCards();
+                }
+
+                async function fetchState() {
+                    try {
+                        const res = await fetch("/api/state");
+                        if (res.ok) {
+                            applyIncomingState(await res.json());
+                        }
+                    } catch {
+                        // Server may be restarting
+                    }
+                }
+
+                await fetchState();
+
+                function connectEvents() {
+                    const events = new EventSource("/events");
+                    events.addEventListener("state", (event) => {
+                        try {
+                            applyIncomingState(JSON.parse(event.data));
+                        } catch {
+                            // Ignore malformed event
+                        }
+                    });
+                    events.onerror = () => {
+                        events.close();
+                        setTimeout(async () => {
+                            await fetchState();
+                            connectEvents();
+                        }, 500);
+                    };
+                }
+
+                connectEvents();
+            }
+
+            window.addEventListener("resize", () => {
+                for (const textarea of app.querySelectorAll(".text-block")) {
+                    autoResize(textarea);
+                }
+            });
+
+            init();
+        </script>
+    </body>
+</html>
