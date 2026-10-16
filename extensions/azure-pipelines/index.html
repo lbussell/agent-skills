@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Azure pipelines</title>
+    <link rel="stylesheet" href="./canvas.css?key={{key}}">
+    <script src="./canvas.js?key={{key}}" defer></script>
+</head>
+<body>
+    <header class="toolbar">
+        <h1>Azure pipelines</h1>
+        <button id="refresh" type="button">Refresh</button>
+    </header>
+    <form id="add">
+        <label for="urls">Pipeline run URLs</label>
+        <div class="add-controls">
+            <input id="urls" type="text" placeholder="Paste one or more Azure DevOps run URLs" required>
+            <button type="submit" class="primary">Watch</button>
+        </div>
+    </form>
+    <p class="monitor-note">Checks every 30s while this Copilot session is running, even with the panel closed.</p>
+    <p id="connection-error" class="notice" role="alert" hidden></p>
+    <p id="action-error" class="notice" role="alert" hidden></p>
+    <main id="runs" aria-label="Watched pipeline runs">
+        <p class="empty">Loading watched pipelines...</p>
+    </main>
+</body>
+</html>
