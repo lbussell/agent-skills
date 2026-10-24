@@ -16,7 +16,7 @@ Examples of the pattern:
 - User describes a flaky test the agent could have queried via an observability MCP. Routing: the debugging skill should mention the observability MCP.
 - User links a chat thread the agent could have fetched via a chat MCP. Routing: the relevant skill should mention the chat MCP.
 
-Read the active transcript at <ABSOLUTE_PATH> (or use the digest below if no path is given).
+Read the active transcript with `session_store_sql` for `<SESSION_ID>`, scoped to this repository or working directory (or use the digest below if no session ID is given).
 
 Scan for:
 - Tool invocations and command flags the agent had to discover
@@ -28,7 +28,7 @@ Scan for:
 
 ## Scope to skills and tools the session actually used
 
-Route findings only to skills, tools, or MCPs this transcript used. A skill counts as used when the transcript shows a `Read` of its `SKILL.md` (under `.cursor/skills/`, `~/.cursor/skills/`, or `~/.cursor/plugins/`), a `Task` prompt naming its path, or a tool call (Shell, Grep, MCP, etc.) matching its documented commands. Speculative routings to skills the parent never opened do not count.
+Route findings only to skills, tools, or MCPs this transcript used. A skill counts as used when the transcript shows a `Read` of its `SKILL.md` (under `.agents/skills/`, `.github/skills/`, `.claude/skills/`, `.copilot/skills/`, `~/.agents/skills/`, `~/.copilot/skills/`, or `~/.copilot/installed-plugins/`), a `skill` call, a `task` prompt naming its path, or a tool call (Shell, `rg`, MCP, etc.) matching its documented commands. Speculative routings to skills the parent never opened do not count.
 
 Two finding shapes are valid:
 - The parent invoked the skill and you found a real gap in its body. Route to the skill's relevant section.

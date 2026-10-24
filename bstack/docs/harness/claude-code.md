@@ -57,9 +57,9 @@ GitHub Copilot loads `~/.copilot/instructions/**/*.instructions.md` into new ses
 
 | Cursor | Claude Code | GitHub Copilot |
 | --- | --- | --- |
-| `.cursor/skills/`, `~/.cursor/skills/` | `.claude/skills/`, `~/.claude/skills/` | `.github/skills/`, `.agents/skills/`, `~/.copilot/skills/`, `~/.agents/skills/` |
+| `.cursor/skills/`, `~/.cursor/skills/` | `.claude/skills/`, `~/.claude/skills/` | Use the skill roots the repo already has; Copilot reads `.agents/skills/`, `.github/skills/`, `.claude/skills/`, and `.copilot/skills/`, and a repo may use more than one. Personal skills may use `~/.agents/skills/` or `~/.copilot/skills/`. When creating a new layout, prefer `.agents/skills/` or `~/.agents/skills/`. |
 | `~/.cursor/plugins/`, `.cursor-plugin/plugin.json` | `~/.claude/plugins/`, `.claude-plugin/plugin.json` | `~/.copilot/installed-plugins/`, `plugin.json` |
-| `.cursor/rules/*.mdc`, always-applied rules | `CLAUDE.md`, or `AGENTS.md` when no `CLAUDE.md` exists. Claude Code never reads `.mdc` files. The model rule is the exception. See Models. | `.github/copilot-instructions.md` or `AGENTS.md`. The model rule is the exception. See Models. |
+| `.cursor/rules/*.mdc`, always-applied rules | `CLAUDE.md`, or `AGENTS.md` when no `CLAUDE.md` exists. Claude Code never reads `.mdc` files. The model rule is the exception. See Models. | Use the instruction files the repo already has, including `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md`; a repo may use more than one. When creating a new shared instruction file, prefer `AGENTS.md`. The model rule is the exception. See Models. |
 | `https://github.com/cursor/plugins/blob/main/pstack/<path>` | `<pstack>/<path>` when that file exists. The plugin ships the skills, `docs/guide/`, and `README.md`. Read the local copy and never fetch it. Give the user the URL when they need a link. | Same as Claude Code. |
 | Transcripts in `~/.cursor/projects/<slug>/agent-transcripts/` | `~/.claude/projects/<slug>/<session>.jsonl`. The slug is the workspace path with each `/` and `.` changed to `-`, so `/Users/you/proj` is `-Users-you-proj`. The newest `.jsonl` directly in that folder is the current session. Its `<session>/subagents/` folder holds subagent transcripts. Read only this workspace's folder. | Use `session_store_sql`, scoped to this repository or working directory. |
 
