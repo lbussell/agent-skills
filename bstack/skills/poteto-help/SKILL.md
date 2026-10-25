@@ -1,7 +1,6 @@
 ---
 name: poteto-help
 description: Guides users through bstack setup, /poteto-mode, and picking the skill, playbook, or principle for a task. Type /poteto-help with a question.
-disable-model-invocation: true
 ---
 
 # Poteto help
@@ -39,7 +38,7 @@ When the model rule is missing and it matters, use `ask_user` to ask whether the
 2. Run [`/setup-bstack`](../setup-bstack/SKILL.md). It asks for a reasoning budget, maps a model to each role, and writes `~/.copilot/instructions/bstack-models.instructions.md`. The rule applies to new sessions. Then it offers once each to generate a verification skill and a formal verification skill for the project, unless the project already has one.
 3. Start a real task with `/poteto-mode`, a goal, and a check that can pass or fail.
 
-Installing changes nothing until the user invokes a skill. Only `/setup-bstack` loads from the user's words. The [README](../../README.md) and [guide page 1](../../docs/guide/01-setup.md) have the details. Offer to word their first prompt with them, per [`references/prompting.md`](references/prompting.md).
+Skills can load automatically when their descriptions match the user's request. The `principle-*` skills disable model invocation. [Guide page 1](../../docs/guide/01-setup.md) has the setup details. Offer to word their first prompt with them, per [`references/prompting.md`](references/prompting.md).
 
 If cost is the worry, say where the tokens go and how to spend fewer. bstack spends extra tokens on subagents and review panels. Rerun `/setup-bstack` and pick a smaller budget or cheaper models. A role set to `auto` or `inherit-parent` omits `model` and `reasoning_effort` so it runs on the session's model, which saves tokens when the chat runs on Auto or a cheaper model. A shorter panel list runs fewer subagents, one for each entry. Save `/poteto-mode` for work that needs rigor.
 
