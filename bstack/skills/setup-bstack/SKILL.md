@@ -1,5 +1,6 @@
 ---
 name: setup-bstack
+disable-model-invocation: true
 description: Configure which models bstack uses per role and at what reasoning budget. Detects your available models and writes an always-applied rule that overrides the skill defaults. Use for /setup-bstack, "configure bstack models", "bstack budget", or changing bstack's model choices.
 ---
 
