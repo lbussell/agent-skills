@@ -1,6 +1,6 @@
-# pstack in Claude Code and GitHub Copilot
+# bstack in Claude Code and GitHub Copilot
 
-pstack skills use Cursor names. In Claude Code or GitHub Copilot, read this file once per session, then map each Cursor name in a skill with the tables below. `<pstack>` means the folder that holds `skills/` and `docs/`. If a Cursor field has no row, drop it and say so. Never pass a field or value the tool schema rejects.
+bstack skills use Cursor names. In Claude Code or GitHub Copilot, read this file once per session, then map each Cursor name in a skill with the tables below. `<bstack>` means the folder that holds `skills/` and `docs/`. If a Cursor field has no row, drop it and say so. Never pass a field or value the tool schema rejects.
 
 ## Tools
 
@@ -9,7 +9,7 @@ pstack skills use Cursor names. In Claude Code or GitHub Copilot, read this file
 | `Task` | `Agent` | `task` |
 | `AskQuestion` | `AskUserQuestion`. In `-p` mode it is absent, so ask in plain text. | `ask_user` |
 | Open a todolist | Use `TodoWrite` if the session offers it. Otherwise keep the list in your reply and update it at each phase. | Use `sql` with `todos` and `todo_deps`. |
-| Run another pstack skill (`/name` or "the **name** skill") | `Read` `<pstack>/skills/<name>/SKILL.md` and follow it. The `Skill` tool refuses most pstack skills. When you tell the user to type it, write `/pstack:<name>`. | `skill` |
+| Run another bstack skill (`/name` or "the **name** skill") | `Read` `<bstack>/skills/<name>/SKILL.md` and follow it. The `Skill` tool refuses most bstack skills. When you tell the user to type it, write `/bstack:<name>`. | `skill` |
 | `Grep`, `Glob` | `Bash` with `rg` when the session has no `Grep` or `Glob`. | `rg`, `glob` |
 
 ## Subagent fields
@@ -17,7 +17,7 @@ pstack skills use Cursor names. In Claude Code or GitHub Copilot, read this file
 | Cursor | Claude Code | GitHub Copilot |
 | --- | --- | --- |
 | `subagent_type: generalPurpose` | `subagent_type: "general-purpose"` | `agent_type: "general-purpose"` |
-| `poteto-agent`, `comment-sicko` | `pstack:poteto-agent`, `pstack:comment-sicko` | Use the matching `agent_type` when the `task` schema lists it. |
+| `poteto-agent`, `comment-sicko` | `bstack:poteto-agent`, `bstack:comment-sicko` | Use the matching `agent_type` when the `task` schema lists it. |
 | `readonly: true` | `subagent_type: "Explore"`. It keeps `Bash`, so the brief also says "do not edit files", and you check `git status` afterward. | `agent_type: "explore"` |
 | `readonly: false` | `general-purpose`. It keeps the session's MCP servers. | `agent_type: "general-purpose"` |
 | `environment: "cloud"` | `isolation: "worktree"`. Name the branch or commit the worker checks out. | Drop it. `task` inherits the current session. |
@@ -36,22 +36,22 @@ GitHub Copilot supports worktree sessions, but `task` does not expose worktree o
 | `claude-<family>-<version>-<effort>[-fast]`, such as `claude-opus-5-5-xhigh` | `model: "opus"` and `effort: "xhigh"`. `model` takes only `opus`, `sonnet`, `haiku`, `fable`. Drop `-fast`. | Use the matching `model` value from the `task` schema and pass the effort as `reasoning_effort`. |
 | A `grok-*`, `gpt-*`, or other non-Claude slug | Omit `model` so the agent runs on the session model, and say so. | Use the matching `model` value from the `task` schema and pass the effort as `reasoning_effort`. |
 | `auto` or `inherit-parent` | Omit `model`. | Omit `model` and `reasoning_effort`. |
-| The `pstack-models.mdc` rule, `~/.cursor/rules/pstack-models.mdc` | `~/.claude/rules/pstack-models.md`. Claude Code loads it into every new session, so its role lines are already in context. If they are not, read the file. If the file or the role's line is missing, use the skill's default slug. | `~/.copilot/instructions/pstack-models.instructions.md`. If the file or role line is missing, use the skill default. |
+| The `bstack-models.mdc` rule, `~/.cursor/rules/bstack-models.mdc` | `~/.claude/rules/bstack-models.md`. Claude Code loads it into every new session, so its role lines are already in context. If they are not, read the file. If the file or the role's line is missing, use the skill's default slug. | `~/.copilot/instructions/bstack-models.instructions.md`. If the file or role line is missing, use the skill default. |
 | A role value `<model> <effort>`, such as `opus high` | `model: "opus"` and `effort: "high"`. | `model: "<model>"` and `reasoning_effort: "<effort>"` |
 
-## setup-pstack
+## setup-bstack
 
-Claude Code loads every `.md` file in `~/.claude/rules/` into each new session, so `setup-pstack` writes its rule there. Follow its steps with these changes:
+Claude Code loads every `.md` file in `~/.claude/rules/` into each new session, so `setup-bstack` writes its rule there. Follow its steps with these changes:
 
 - Detect. The detected models are the `model` values that the `Agent` tool schema lists, each with an effort from its `effort` values. Write a real model as `<model> <effort>`, such as `opus xhigh`. The effort is the last token, so the budget step works as written.
 - Defaults. Map each default slug with the rows above: `claude-opus-5-5-xhigh` is `opus xhigh`, and `grok-4.7-xhigh-fast` is `inherit-parent`.
-- Write. Write `~/.claude/rules/pstack-models.md` with no frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file. Never put the role lines in `CLAUDE.md` or `AGENTS.md`.
+- Write. Write `~/.claude/rules/bstack-models.md` with no frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file. Never put the role lines in `CLAUDE.md` or `AGENTS.md`.
 
 GitHub Copilot loads `~/.copilot/instructions/**/*.instructions.md` into new sessions. Follow the same steps with these changes:
 
 - Detect. Use the `model` values from the `task` schema and its supported `reasoning_effort` values. Write `<model> <effort>`.
 - Defaults. Map each default with the Models table. Use `inherit-parent` when its model is unavailable.
-- Write. Write `~/.copilot/instructions/pstack-models.instructions.md` with `applyTo: "**"` frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file.
+- Write. Write `~/.copilot/instructions/bstack-models.instructions.md` with `applyTo: "**"` frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file.
 
 ## Paths
 
@@ -60,7 +60,7 @@ GitHub Copilot loads `~/.copilot/instructions/**/*.instructions.md` into new ses
 | `.cursor/skills/`, `~/.cursor/skills/` | `.claude/skills/`, `~/.claude/skills/` | Use the skill roots the repo already has; Copilot reads `.agents/skills/`, `.github/skills/`, `.claude/skills/`, and `.copilot/skills/`, and a repo may use more than one. Personal skills may use `~/.agents/skills/` or `~/.copilot/skills/`. When creating a new layout, prefer `.agents/skills/` or `~/.agents/skills/`. |
 | `~/.cursor/plugins/`, `.cursor-plugin/plugin.json` | `~/.claude/plugins/`, `.claude-plugin/plugin.json` | `~/.copilot/installed-plugins/`, `plugin.json` |
 | `.cursor/rules/*.mdc`, always-applied rules | `CLAUDE.md`, or `AGENTS.md` when no `CLAUDE.md` exists. Claude Code never reads `.mdc` files. The model rule is the exception. See Models. | Use the instruction files the repo already has, including `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md`; a repo may use more than one. When creating a new shared instruction file, prefer `AGENTS.md`. The model rule is the exception. See Models. |
-| `https://github.com/cursor/plugins/blob/main/pstack/<path>` | `<pstack>/<path>` when that file exists. The plugin ships the skills, `docs/guide/`, and `README.md`. Read the local copy and never fetch it. Give the user the URL when they need a link. | Same as Claude Code. |
+| `https://github.com/cursor/plugins/blob/main/bstack/<path>` | `<bstack>/<path>` when that file exists. The plugin ships the skills, `docs/guide/`, and `README.md`. Read the local copy and never fetch it. Give the user the URL when they need a link. | Same as Claude Code. |
 | Transcripts in `~/.cursor/projects/<slug>/agent-transcripts/` | `~/.claude/projects/<slug>/<session>.jsonl`. The slug is the workspace path with each `/` and `.` changed to `-`, so `/Users/you/proj` is `-Users-you-proj`. The newest `.jsonl` directly in that folder is the current session. Its `<session>/subagents/` folder holds subagent transcripts. Read only this workspace's folder. | Use `session_store_sql`, scoped to this repository or working directory. |
 
 ## Cursor-only features

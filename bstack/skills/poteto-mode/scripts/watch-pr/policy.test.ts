@@ -152,7 +152,7 @@ describe("snapshot query planning", () => {
   });
 });
 
-it("scans stacks tier-major so an upstack conflict outranks frontier CI", async () => {
+it("scans stacks tier-major so an ubstack conflict outranks frontier CI", async () => {
   const frontier = await readSnapshot({
     reader: fakeReader({
       fastPath: { kind: "checks", checks: [failedCheck()] },
@@ -162,13 +162,13 @@ it("scans stacks tier-major so an upstack conflict outranks frontier CI", async 
     pendingHistory: "omit",
     allowDraft: false,
   });
-  const upstack = await readSnapshot({
+  const ubstack = await readSnapshot({
     reader: fakeReader({ facts: { mergeable: "CONFLICTING" } }),
     context: context(11),
     pendingHistory: "omit",
     allowDraft: false,
   });
-  const decision = selectTierMajorStackDecision([frontier, upstack]);
+  const decision = selectTierMajorStackDecision([frontier, ubstack]);
   expect(decision).toMatchObject({
     kind: "blocker",
     blocker: { kind: "merge-conflicts", pr: { number: 11 } },
@@ -182,19 +182,19 @@ it("attributes a stack wait to the PR whose checks are pending, not the bottom",
     pendingHistory: "omit",
     allowDraft: false,
   });
-  const pendingUpstack = await readSnapshot({
+  const pendingUbstack = await readSnapshot({
     reader: fakeReader({
-      fastPath: { kind: "checks", checks: [pendingCheck("upstack-build")] },
+      fastPath: { kind: "checks", checks: [pendingCheck("ubstack-build")] },
     }),
     context: context(21),
     pendingHistory: "omit",
     allowDraft: false,
   });
-  const decision = selectTierMajorStackDecision([readyBottom, pendingUpstack]);
+  const decision = selectTierMajorStackDecision([readyBottom, pendingUbstack]);
   expect(decision).toMatchObject({
     kind: "waiting",
     frontier: { number: 21 },
-    pending: [{ name: "upstack-build" }],
+    pending: [{ name: "ubstack-build" }],
   });
 });
 

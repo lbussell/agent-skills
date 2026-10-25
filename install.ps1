@@ -3,7 +3,6 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
-$skillsDirectory = Join-Path $PSScriptRoot 'skills'
 $extensionsSourceDirectory = Join-Path $PSScriptRoot 'extensions'
 $legacyExtensionsDirectory = Join-Path $PSScriptRoot '.github\extensions'
 $copilotHome = if ($env:COPILOT_HOME) {
@@ -12,10 +11,6 @@ $copilotHome = if ($env:COPILOT_HOME) {
     Join-Path $HOME '.copilot'
 }
 $extensionsDirectory = Join-Path $copilotHome 'extensions'
-
-if (-not (Test-Path -LiteralPath $skillsDirectory -PathType Container)) {
-    throw "Skill source directory not found: $skillsDirectory"
-}
 
 if (-not (Test-Path -LiteralPath $extensionsSourceDirectory -PathType Container)) {
     throw "Extension source directory not found: $extensionsSourceDirectory"
@@ -72,9 +67,4 @@ foreach ($extensionPlan in $extensionPlans) {
         New-Item -ItemType Junction -Path $extensionPlan.Destination -Target $extensionPlan.Source.FullName | Out-Null
         Write-Host "Linked $($extensionPlan.Destination) to $($extensionPlan.Source.FullName)"
     }
-}
-
-copilot skill add $skillsDirectory
-if ($LASTEXITCODE -ne 0) {
-    throw "Failed to install skills from $skillsDirectory (Copilot exit code: $LASTEXITCODE)."
 }

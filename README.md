@@ -2,19 +2,23 @@
 
 A collection of my skills for AI coding agents.
 
-## Install
+## Install Skills
 
-Run `.\install.ps1` to install the skills and extensions
-for your user. Copilot CLI must be on your `PATH`.
+Add the skill collections you want:
 
-Keep this checkout at the same path. After updating it, rerun the installer
-and reload extensions or start a new Copilot session.
+```text
+copilot skill add csharp
+copilot skill add other
+copilot skill add bstack/skills
+```
+
+## Install Extensions (GitHub Copilot)
+
+Run `.\install.ps1` to install extensions in `~/.github/extensions`.
 
 ## Attribution
 
-The following were lifted from https://github.com/backnotprop/pstack (MIT license):
+`bstack` is based on [pstack] by [Lauren Tan] (MIT license).
 
-- skills/blast-radius
-- skills/bro
-- skills/technical-writing
-- skills/unslop
+[Lauren Tan]: https://github.com/poteto
+[pstack]: https://github.com/cursor/plugins/tree/9580c23696ac8d7abed0c166f2f9918800afb819/pstack

@@ -433,7 +433,7 @@ describe("context and stack discovery", () => {
       },
       {
         number: parsePrNumber(43),
-        headRefName: "upstack",
+        headRefName: "ubstack",
         isCrossRepository: false,
         baseRefName: "feature",
       },
@@ -451,7 +451,7 @@ describe("context and stack discovery", () => {
   it("does not attach upstream branch children to a fork head", () => {
     const ordered = orderStack(context, [
       { number: context.number, headRefName: "feature", baseRefName: "main", isCrossRepository: true },
-      { number: parsePrNumber(43), headRefName: "upstack", baseRefName: "feature", isCrossRepository: false },
+      { number: parsePrNumber(43), headRefName: "ubstack", baseRefName: "feature", isCrossRepository: false },
     ]);
     expect(ordered.map((item) => Number(item.number))).toEqual([42]);
   });

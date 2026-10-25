@@ -1,11 +1,11 @@
 ---
-name: setup-pstack
-description: Configure which models pstack uses per role and at what reasoning budget. Detects your available models and writes an always-applied rule that overrides the skill defaults. Use for /setup-pstack, "configure pstack models", "pstack budget", or changing pstack's model choices.
+name: setup-bstack
+description: Configure which models bstack uses per role and at what reasoning budget. Detects your available models and writes an always-applied rule that overrides the skill defaults. Use for /setup-bstack, "configure bstack models", "bstack budget", or changing bstack's model choices.
 ---
 
-# Setup pstack
+# Setup bstack
 
-Write `~/.copilot/instructions/pstack-models.instructions.md`, an always-applied instructions file that sets pstack's model per role.
+Write `~/.copilot/instructions/bstack-models.instructions.md`, an always-applied instructions file that sets bstack's model per role.
 
 ## Steps
 
@@ -15,7 +15,7 @@ Use the `model` values from the `task` tool schema in this session and its suppo
 
 ### 2. Load current state
 
-The default role-to-model mapping is the rule shape shown in step 5 below, with each default mapped using the `task` schema (`<model> <effort>`, or `inherit-parent` when its model is unavailable). If `~/.copilot/instructions/pstack-models.instructions.md` already exists, read it and treat its `# budget` line and its role values as the current choices. Otherwise start from those defaults. A line whose role is not in step 5, such as `how critics`, is from a retired role. Drop it.
+The default role-to-model mapping is the rule shape shown in step 5 below, with each default mapped using the `task` schema (`<model> <effort>`, or `inherit-parent` when its model is unavailable). If `~/.copilot/instructions/bstack-models.instructions.md` already exists, read it and treat its `# budget` line and its role values as the current choices. Otherwise start from those defaults. A line whose role is not in step 5, such as `how critics`, is from a retired role. Drop it.
 
 ### 3. Budget, map, and confirm
 
@@ -36,14 +36,14 @@ Every real `<model> <effort>` written must be in the detected set. `inherit-pare
 
 ### 5. Write the rule
 
-Write `~/.copilot/instructions/pstack-models.instructions.md` with `applyTo: "**"` frontmatter, then the comment lines, a `# budget` line with the chosen label and its target effort, and one line per role, using the same labels poteto-mode uses. Map each default below (`claude-opus-5-5-xhigh`, `grok-4.7-xhigh-fast`) to `<model> <effort>` using the matching `model` value from the `task` schema (or `inherit-parent` when its model is unavailable); when running a role, pass `<model> <effort>` to `task` as `model: "<model>"` and `reasoning_effort: "<effort>"`. Overwrite the whole file so re-runs stay idempotent. Shape:
+Write `~/.copilot/instructions/bstack-models.instructions.md` with `applyTo: "**"` frontmatter, then the comment lines, a `# budget` line with the chosen label and its target effort, and one line per role, using the same labels poteto-mode uses. Map each default below (`claude-opus-5-5-xhigh`, `grok-4.7-xhigh-fast`) to `<model> <effort>` using the matching `model` value from the `task` schema (or `inherit-parent` when its model is unavailable); when running a role, pass `<model> <effort>` to `task` as `model: "<model>"` and `reasoning_effort: "<effort>"`. Overwrite the whole file so re-runs stay idempotent. Shape:
 
 ```
 ---
-description: pstack per-role model choices (overrides skill defaults)
+description: bstack per-role model choices (overrides skill defaults)
 applyTo: "**"
 ---
-# pstack model configuration. One line per role. Delete a line to fall back to the skill default.
+# bstack model configuration. One line per role. Delete a line to fall back to the skill default.
 # `inherit-parent` or `auto` as a value: the role runs on the parent chat model (omit task `model` and `reasoning_effort`). Alias entries in a panel list still count toward its fan-out.
 # budget: large (xhigh)
 feature, refactoring: grok-4.7-xhigh-fast
@@ -71,8 +71,8 @@ Tell the user the instructions file was written and that it applies to new sessi
 
 ### 7. Offer a verification skill (optional)
 
-Check whether the project has a way to drive the real app for proof (a `verify-*` skill, or an existing harness). If not, offer once: "want a project-local verification skill, so agents can drive the app the way a user does and prove changes work? I can generate one with /create-verification-skill." On yes, run the `create-verification-skill` skill (resolves wherever pstack is installed: workspace, user, or plugin). On no, move on without pushing.
+Check whether the project has a way to drive the real app for proof (a `verify-*` skill, or an existing harness). If not, offer once: "want a project-local verification skill, so agents can drive the app the way a user does and prove changes work? I can generate one with /create-verification-skill." On yes, run the `create-verification-skill` skill (resolves wherever bstack is installed: workspace, user, or plugin). On no, move on without pushing.
 
 ### 8. Offer a formal verification skill (optional)
 
-Check whether the project already has a formal verification skill (a project skill that runs a model checker, a proof, or another verifier against the code). If not, offer once: "want a formal verification skill, so agents can prove a key property of your code holds in every case in scope, not only the cases tests reach? I can generate one with /create-formal-verification-skill." On yes, run the `create-formal-verification-skill` skill (resolves wherever pstack is installed: workspace, user, or plugin). On no, move on without pushing.
+Check whether the project already has a formal verification skill (a project skill that runs a model checker, a proof, or another verifier against the code). If not, offer once: "want a formal verification skill, so agents can prove a key property of your code holds in every case in scope, not only the cases tests reach? I can generate one with /create-formal-verification-skill." On yes, run the `create-formal-verification-skill` skill (resolves wherever bstack is installed: workspace, user, or plugin). On no, move on without pushing.

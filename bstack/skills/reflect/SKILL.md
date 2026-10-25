@@ -20,7 +20,7 @@ Query `sessions` and `turns` in `session_store_sql` scoped to this repository or
 
 One message, three `task` calls, `agent_type: "general-purpose"`. Reviewers need MCP access to look up the tickets, chat threads, and observability traces the transcript references, and `agent_type: "explore"` strips MCPs.
 
-Each reviewer and the synthesizer name a role line in `~/.copilot/instructions/pstack-models.instructions.md` and a default. For a `<model> <effort>` role value, set `model: "<model>"` and `reasoning_effort: "<effort>"`; if the file or the line is missing, map the default slug to the matching `model` value from the `task` schema and pass the effort as `reasoning_effort`. Omit `model` and `reasoning_effort` when the value is `auto` or `inherit-parent`. If the `task` tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message. Pick each subagent's `reasoning_effort` and fast or standard speed for the job, per the Subagents section of the **poteto-mode** skill.
+Each reviewer and the synthesizer name a role line in `~/.copilot/instructions/bstack-models.instructions.md` and a default. For a `<model> <effort>` role value, set `model: "<model>"` and `reasoning_effort: "<effort>"`; if the file or the line is missing, map the default slug to the matching `model` value from the `task` schema and pass the effort as `reasoning_effort`. Omit `model` and `reasoning_effort` when the value is `auto` or `inherit-parent`. If the `task` tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message. Pick each subagent's `reasoning_effort` and fast or standard speed for the job, per the Subagents section of the **poteto-mode** skill.
 
 | Lens | Role line | Default `model` | Prompt template |
 |---|---|---|---|
@@ -32,7 +32,7 @@ Pass each template verbatim, substituting the transcript session ID or digest wh
 
 ## 3. Synthesize
 
-One `task` call, `agent_type: "general-purpose"`, with `model` and `reasoning_effort` from the `reflect judgment, divergent, synthesizer` line in `~/.copilot/instructions/pstack-models.instructions.md` (default `claude-opus-5-5-xhigh`, mapped to the matching `model` in the `task` schema with `reasoning_effort: "xhigh"`). It spot-verifies citations through MCP, and `agent_type: "explore"` strips MCPs. Pass `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. It returns an Accepted / Rejected / Backlog list.
+One `task` call, `agent_type: "general-purpose"`, with `model` and `reasoning_effort` from the `reflect judgment, divergent, synthesizer` line in `~/.copilot/instructions/bstack-models.instructions.md` (default `claude-opus-5-5-xhigh`, mapped to the matching `model` in the `task` schema with `reasoning_effort: "xhigh"`). It spot-verifies citations through MCP, and `agent_type: "explore"` strips MCPs. Pass `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. It returns an Accepted / Rejected / Backlog list.
 
 ## 4. Structural enforcement check
 
