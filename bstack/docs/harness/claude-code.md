@@ -1,0 +1,77 @@
+# bstack in Claude Code and GitHub Copilot
+
+bstack skills use Cursor names. In Claude Code or GitHub Copilot, read this file once per session, then map each Cursor name in a skill with the tables below. `<bstack>` means the folder that holds `skills/` and `docs/`. If a Cursor field has no row, drop it and say so. Never pass a field or value the tool schema rejects.
+
+## Tools
+
+| Cursor | Claude Code | GitHub Copilot |
+| --- | --- | --- |
+| `Task` | `Agent` | `task` |
+| `AskQuestion` | `AskUserQuestion`. In `-p` mode it is absent, so ask in plain text. | `ask_user` |
+| Open a todolist | Use `TodoWrite` if the session offers it. Otherwise keep the list in your reply and update it at each phase. | Use `sql` with `todos` and `todo_deps`. |
+| Run another bstack skill (`/name` or "the **name** skill") | `Read` `<bstack>/skills/<name>/SKILL.md` and follow it. The `Skill` tool refuses most bstack skills. When you tell the user to type it, write `/bstack:<name>`. | `skill` |
+| `Grep`, `Glob` | `Bash` with `rg` when the session has no `Grep` or `Glob`. | `rg`, `glob` |
+
+## Subagent fields
+
+| Cursor | Claude Code | GitHub Copilot |
+| --- | --- | --- |
+| `subagent_type: generalPurpose` | `subagent_type: "general-purpose"` | `agent_type: "general-purpose"` |
+| `poteto-agent`, `comment-sicko` | `bstack:poteto-agent`, `bstack:comment-sicko` | Use the matching `agent_type` when the `task` schema lists it. |
+| `readonly: true` | `subagent_type: "Explore"`. It keeps `Bash`, so the brief also says "do not edit files", and you check `git status` afterward. | `agent_type: "explore"` |
+| `readonly: false` | `general-purpose`. It keeps the session's MCP servers. | `agent_type: "general-purpose"` |
+| `environment: "cloud"` | `isolation: "worktree"`. Name the branch or commit the worker checks out. | Drop it. `task` inherits the current session. |
+| `environment: "local"` | Omit. | Omit. |
+| `cloud_base_branch: <b>` | Tell the worker to check out `<b>` first. | Drop it. |
+| `run_in_background: true` | Omit. Subagents run in the background by default and notify you when they finish. | `mode: "background"` |
+| `resume` | Spawn a new agent and paste the earlier result into its brief. | `write_agent` with the existing `agent_id` |
+| `file_attachments` | List the paths in the brief. | List the paths in the prompt. |
+
+GitHub Copilot supports worktree sessions, but `task` does not expose worktree or session fields. Subagents inherit the current session's checkout.
+
+## Models
+
+| Cursor | Claude Code | GitHub Copilot |
+| --- | --- | --- |
+| `claude-<family>-<version>-<effort>[-fast]`, such as `claude-opus-5-5-xhigh` | `model: "opus"` and `effort: "xhigh"`. `model` takes only `opus`, `sonnet`, `haiku`, `fable`. Drop `-fast`. | Use the matching `model` value from the `task` schema and pass the effort as `reasoning_effort`. |
+| A `grok-*`, `gpt-*`, or other non-Claude slug | Omit `model` so the agent runs on the session model, and say so. | Use the matching `model` value from the `task` schema and pass the effort as `reasoning_effort`. |
+| `auto` or `inherit-parent` | Omit `model`. | Omit `model` and `reasoning_effort`. |
+| The `bstack-models.mdc` rule, `~/.cursor/rules/bstack-models.mdc` | `~/.claude/rules/bstack-models.md`. Claude Code loads it into every new session, so its role lines are already in context. If they are not, read the file. If the file or the role's line is missing, use the skill's default slug. | `~/.copilot/instructions/bstack-models.instructions.md`. If the file or role line is missing, use the skill default. |
+| A role value `<model> <effort>`, such as `opus high` | `model: "opus"` and `effort: "high"`. | `model: "<model>"` and `reasoning_effort: "<effort>"` |
+
+## setup-bstack
+
+Claude Code loads every `.md` file in `~/.claude/rules/` into each new session, so `setup-bstack` writes its rule there. Follow its steps with these changes:
+
+- Detect. The detected models are the `model` values that the `Agent` tool schema lists, each with an effort from its `effort` values. Write a real model as `<model> <effort>`, such as `opus xhigh`. The effort is the last token, so the budget step works as written.
+- Defaults. Map each default slug with the rows above: `claude-opus-5-5-xhigh` is `opus xhigh`, and `grok-4.7-xhigh-fast` is `inherit-parent`.
+- Write. Write `~/.claude/rules/bstack-models.md` with no frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file. Never put the role lines in `CLAUDE.md` or `AGENTS.md`.
+
+GitHub Copilot loads `~/.copilot/instructions/**/*.instructions.md` into new sessions. Follow the same steps with these changes:
+
+- Detect. Use the `model` values from the `task` schema and its supported `reasoning_effort` values. Write `<model> <effort>`.
+- Defaults. Map each default with the Models table. Use `inherit-parent` when its model is unavailable.
+- Write. Write `~/.copilot/instructions/bstack-models.instructions.md` with `applyTo: "**"` frontmatter, then the comment lines, the `# budget` line, and one line per role from step 5. Overwrite the whole file.
+
+## Paths
+
+| Cursor | Claude Code | GitHub Copilot |
+| --- | --- | --- |
+| `.cursor/skills/`, `~/.cursor/skills/` | `.claude/skills/`, `~/.claude/skills/` | Use the skill roots the repo already has; Copilot reads `.agents/skills/`, `.github/skills/`, `.claude/skills/`, and `.copilot/skills/`, and a repo may use more than one. Personal skills may use `~/.agents/skills/` or `~/.copilot/skills/`. When creating a new layout, prefer `.agents/skills/` or `~/.agents/skills/`. |
+| `~/.cursor/plugins/`, `.cursor-plugin/plugin.json` | `~/.claude/plugins/`, `.claude-plugin/plugin.json` | `~/.copilot/installed-plugins/`, `plugin.json` |
+| `.cursor/rules/*.mdc`, always-applied rules | `CLAUDE.md`, or `AGENTS.md` when no `CLAUDE.md` exists. Claude Code never reads `.mdc` files. The model rule is the exception. See Models. | Use the instruction files the repo already has, including `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md`; a repo may use more than one. When creating a new shared instruction file, prefer `AGENTS.md`. The model rule is the exception. See Models. |
+| `https://github.com/cursor/plugins/blob/main/bstack/<path>` | `<bstack>/<path>` when that file exists. The plugin ships the skills, `docs/guide/`, and `README.md`. Read the local copy and never fetch it. Give the user the URL when they need a link. | Same as Claude Code. |
+| Transcripts in `~/.cursor/projects/<slug>/agent-transcripts/` | `~/.claude/projects/<slug>/<session>.jsonl`. The slug is the workspace path with each `/` and `.` changed to `-`, so `/Users/you/proj` is `-Users-you-proj`. The newest `.jsonl` directly in that folder is the current session. Its `<session>/subagents/` folder holds subagent transcripts. Read only this workspace's folder. | Use `session_store_sql`, scoped to this repository or working directory. |
+
+## Cursor-only features
+
+Claude Code has no Cursor Automations, Bugbot, Cursor cloud agents, or built-in PR tool. When a step needs one, put one line in your reply, `Skipped in Claude Code: <step>. <reason>.`, then go on to the next step. Do not stop, ask, or retry. When a later step needs what the skipped step made, such as a URL or a key, leave a placeholder and name it in the line.
+
+For GitHub Copilot, use the third column. When it says to skip, use `Skipped in GitHub Copilot: <step>. <reason>.`.
+
+| Cursor | Claude Code | GitHub Copilot |
+| --- | --- | --- |
+| Cursor Automations: routines, `update_state` routine calls, `api2.cursor.sh/automations` webhooks, routine wakes, and `SendToUser` secret requests | Skip with the line. | Use `manage_schedule` for schedules and wakes. Skip the other parts. |
+| Bugbot | Bugbot comments on a GitHub PR are ordinary review threads, so triage them with the forge command that the step gives. Skip a step that starts, waits for, or configures Bugbot when the PR has no Bugbot check or comment. | Same as Claude Code. |
+| Cursor cloud agents | `environment: "cloud"` maps to a worktree, as in Subagent fields. Skip a step that needs the cloud agent itself, such as its dashboard status or its own machine. | `task` inherits the current session. Skip a step that needs a separate cloud agent. |
+| A built-in PR tool | Use the forge command that the step gives, such as `gh pr create`. That is not a skip, so write no line. | Same as Claude Code. |
