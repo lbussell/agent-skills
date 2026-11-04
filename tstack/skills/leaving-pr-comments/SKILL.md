@@ -39,6 +39,9 @@ Write the comment itself in a direct style:
 - Keep it concise and avoid filler, canned thanks, or status narration.
 - Distinguish verified facts from judgment.
 
+Reply inside existing review threads with `reply_to_review_thread`, or
+`reply_and_resolve_review_thread` when the thread should be resolved.
+
 Preview the final Markdown before posting so quoting and blank lines render as
 shown. After posting, verify that GitHub returned the comment or review URL.
 Resolve a review thread only after its response was posted successfully.

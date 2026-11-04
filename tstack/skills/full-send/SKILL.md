@@ -50,17 +50,15 @@ one appears.
 4. **File the PR** with the `file-pr` skill. Rebase onto the latest default
    branch first. Add one short line to the description that says how you proved
    the change.
-5. **Babysit the PR** with the `babysit-pr` skill. Fix real findings and CI
-   failures. Get proof for each fix before you push it.
+5. **Follow the PR** until it is ready. Wait for CI and review bots. Fix real
+   findings and CI failures. Get proof for each fix before you push it.
 6. **Merge** when the merge gate passes.
 7. **Report** in your final message: the PR link, the merge commit, your proof,
    and each decision you made for the user.
 
 Stay active from step 1 to step 7. If you end your turn while checks or bots are
-pending, the work stops, because nobody will prompt you again. Wait with the
-watcher from `babysit-pr`, so something wakes you when the PR changes. In T3
-Code that is `watch_pull_request`. If you stop before the merge, call
-`unwatch_pull_request` first.
+pending, the work stops, because nobody will prompt you again. Wait for them
+in a blocking command, for example `gh pr checks --watch`.
 
 ## Proof
 
@@ -100,9 +98,8 @@ review" if you have high confidence in your changes.
 ## Asking the user
 
 A question in a normal message goes unseen, and the thread looks done. To ask
-the user something, use the harness's question tool so the thread shows that
-it is waiting: `AskUserQuestion` in Claude Code, `request_user_input` in Codex,
-or the question tool your harness has. Put all the context in the question:
+the user something, use the `ask_user` tool so the thread shows that it is
+waiting. Put all the context in the question:
 the PR link, what blocks you, and the options with your recommendation first.
 
 Ask only when you cannot continue alone:
@@ -118,6 +115,6 @@ Ask only when you cannot continue alone:
 Decide everything else yourself with sensible defaults, and list those decisions
 in the report.
 
-If no question tool is available, or the tool returns no answer, take the safe
+If `ask_user` is unavailable, or the tool returns no answer, take the safe
 path: leave the PR open and unmerged, and start your final message with the
 question.
