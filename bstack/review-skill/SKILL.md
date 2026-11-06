@@ -3,7 +3,6 @@ name: review-skill
 description: >-
   Review and tighten agent skills and instruction files for clarity, brevity, and structure.
   Use when reviewing or editing a SKILL.md file, skill reference files, or AGENTS.md instructions.
-disable-model-invocation: true
 ---
 
 # Review a skill

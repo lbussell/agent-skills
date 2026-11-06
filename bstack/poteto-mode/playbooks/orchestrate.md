@@ -79,7 +79,7 @@ A dependency is a context relay, not just ordering. Undeclared upstream context 
 
 - The frontier is a computed object, never narrative. Recompute `frontier.json` after every merge and stack mutation: ordered PR list, branch names, head SHAs, a generation number, the lowest unmerged PR. Walk the PR base chain from the checkout's current branch with `gh`, or `origin pr` when the program resolved the forge to Origin, so chain order and PR states come from the forge. Head SHAs come from local branch refs, so resolve it from the stacker's clone. A branch with no PR is an error, not a guess.
 - Exactly one stacker per stack may mutate topology (chain rebases, force-pushes, base retargets, merges), serialized within its stack. Record the holder in the standing orders. Chain rebases run in a `task` subagent (`task` inherits the current session; skip any step that needs a separate cloud agent with `Skipped in GitHub Copilot: <step>. <reason>.`).
-- Workers never rebase and never retarget or merge PRs. Babysitters follow `playbooks/babysit.md`, one per stack, scoped to one immutable frontier generation. They report conflicts to the stacker rather than rebasing.
+- Workers never rebase and never retarget or merge PRs. They report conflicts to the stacker rather than rebasing.
 - PR closes and retargets go through the stacker only. Closing a base PR orphans every chain above it. Merges and stack surgery are units with briefs like any other.
 - One retro watcher follows merged PRs for reverts, post-merge CI breaks, and orphaned follow-ups.
 

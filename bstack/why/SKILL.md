@@ -1,7 +1,6 @@
 ---
 name: why
 description: "Investigate the motivation, history, and tradeoffs behind code using git history, pull requests, issues, tests, and in-repo docs. Use for 'why does X work this way', 'why we picked Y', design rationale, or regression history (use how for runtime behavior)."
-disable-model-invocation: true
 ---
 
 # Why

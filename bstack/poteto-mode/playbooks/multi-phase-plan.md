@@ -6,7 +6,7 @@
 2. Settle open questions by prototype before you write. Run `playbooks/prototype.md` for each. Keep the branch, the SHA, and the screenshots for Appendix A. Ask the operator only about a product or preference call that no run can settle. Give options (the **never-block-on-the-human** principle).
 3. Explore in `task` subagents with `agent_type: "poteto-agent"` (when the `task` schema lists it) and an explicit `model` and `reasoning_effort` per the Subagents section (the **guard-the-context-window** principle). Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section. Each returns file pointers, conventions, test commands, and entry points. No inlined dumps.
 4. Copy the skeleton below into the plan file and fill every placeholder. Unless the operator names a path, write the file under the agent store's `docs/`. Keep every heading and every sub-block in the order shown. One section per PR. One PR is one change with its own evidence (the **sequence-verifiable-units** principle). Name the execution playbook in **How to read this**. Pick between `playbooks/autopilot-full.md` and `playbooks/autopilot-stack.md` per the rule at the end of `playbooks/autopilot-stack.md`. A standing program takes `playbooks/orchestrate.md`.
-5. Write under `/technical-writing` in full, then `/unslop`. The body is one Diátaxis mode, how-to. Appendices hold explanation and reference. Each heading states the task or the finding. No long dashes. No mid-sentence colons.
+5. Write under `/technical-writing` in full, then `/unslop`. The body is one Diátaxis mode, how-to. Appendices hold explanation and reference. Each heading states the task or the finding. Never use the full em dash.
 6. Re-read the plan once against the skeleton. Every placeholder is filled, every heading is in order, and every PR section has its verification and merge blocks (the **encode-lessons-in-structure** principle).
 7. Hand back. Post the plan path, then stop. Execution starts on the operator's explicit go, under the execution playbook the plan names.
 
@@ -54,11 +54,11 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 ### PR mechanics, for every PR
 
 - [ ] Resolve the forge once. Default to `gh`; if `command -v origin` succeeds and Origin can resolve the repository, use `origin pr` for every PR operation. Record any fallback to `gh`. Never require `gt`.
-- [ ] Open the PR ready, never draft, per **Opening a PR**, with `origin pr create --status open --base <base-branch>` or `gh pr create --base <base-branch>` according to the resolved forge. A stack child targets its parent branch.
+- [ ] Complete and verify the change locally first, then get operator approval before pushing or opening the PR per **Opening a PR**. Never open an unfinished PR early or push incremental WIP commits.
 - [ ] Run the repo's lint and typecheck once before the PR-facing push. Push with hooks on.
 - [ ] Run `/deslop` before each commit and `/no-comments` before review.
 - [ ] Triage every automated review comment: fix real findings, dismiss noise with a concrete reason.
-- [ ] Rebase onto current trunk before the code-ready report and babysit. Keep that merge base in fix rounds. Rebase again only at merge prep, on a `git merge-tree` conflict with trunk, or on a CI failure that comes from a change on trunk.
+- [ ] Rebase onto current trunk before the code-ready report. Keep that merge base in fix rounds. Rebase again only at merge prep, on a `git merge-tree` conflict with trunk, or on a CI failure that comes from a change on trunk.
 
 ### Verdict and merge, for every PR
 

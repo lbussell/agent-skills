@@ -3,7 +3,6 @@ name: technical-writing
 description: >-
   Improve sentence structure, framing, clarity, and precision in technical documentation.
   Use for READMEs, procedures, reference overviews, explanations, architecture documents, and RFCs.
-disable-model-invocation: true
 ---
 
 # Technical writing

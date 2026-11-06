@@ -1,7 +1,6 @@
 ---
 name: reflect
 description: "Mine the active conversation transcript for durable learnings and route each to a concrete edit on an existing skill. Use when the user says reflect or /reflect."
-disable-model-invocation: true
 ---
 
 # Reflect

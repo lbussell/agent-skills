@@ -17,8 +17,8 @@
 3. Plan the fix from the trace. If it crosses a function boundary, `architect` first. Delegate implementation to a `task` subagent using your configured `perf-issue` model from `~/.copilot/instructions/bstack-models.instructions.md` (default `grok-4.7-xhigh-fast`, mapped to the matching `model` value from the `task` schema with the effort passed as `reasoning_effort`). Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section. Review the diff. Capture a post-fix trace.
    Apply the **sequence-verifiable-units** principle, verifying each attempt before trying the next.
 4. Parse and compare the artifacts (JSON to sqlite, diff). "Inconclusive" or wrong-surface is not a pass. Flag it.
-5. Cite the measurement in the PR.
-6. Run **Opening a PR**.
+5. Report the baseline, post-fix measurement, and delta to the user.
+6. Run **Opening a PR** (stop at verified PR-ready state and wait for user approval before committing, pushing, or submitting a PR).
 
 For sustained improvement against a metric rather than a one-off fix, use the Hillclimb playbook (`playbooks/hillclimb.md`).
 

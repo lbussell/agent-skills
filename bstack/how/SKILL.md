@@ -1,7 +1,6 @@
 ---
 name: how
 description: "Explain subsystem architecture, runtime flow, and onboarding mental models, or answer placement, ownership, and layering questions ('where should this live', 'which package owns this', 'is this the right layer'). Use for 'how does X work' or code walkthroughs before changing something (use why for motivation)."
-disable-model-invocation: true
 ---
 
 # How
