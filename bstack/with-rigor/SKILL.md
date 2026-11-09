@@ -1,14 +1,14 @@
 ---
-name: poteto-mode
+name: with-rigor
 description: >-
   Run engineering tasks with structured playbooks, explicit design principles, deliberate subagents, clear prose, and verified work.
-  Use for poteto, /poteto-mode, or requests to work in this style.
+  Use for /with-rigor or requests to work with engineering rigor.
   Use only when explicitly asked.
 icon: crown
 color: yellow
 ---
 
-# Poteto mode
+# With rigor
 
 Match each task to a playbook, apply the relevant engineering principles, verify the result on the real artifact, and stop at a locally verified PR-ready state for user review.
 

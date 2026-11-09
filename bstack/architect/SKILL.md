@@ -29,7 +29,7 @@ Run the **arena** skill with the design-sketch task and the Phase A grounding ar
 
 Take the runners from the `architect runners` line in `~/.copilot/instructions/bstack-models.instructions.md` (passing each `<model> <effort>` entry as `model: "<model>"` and `reasoning_effort: "<effort>"`), in place of the `arena runners` line. If the file or that line is missing, use `claude-opus-5-5-xhigh` and `grok-4.7-xhigh-fast`, mapped to the matching `model` value from the `task` schema with the effort passed as `reasoning_effort`. Alias and rejected entries follow the runner rules in the **arena** skill's Phase A.
 
-Design it twice. Require at least two structurally distinct candidates before synthesis, even when the first looks sufficient. This is the [exhaust-the-design-space](../poteto-mode/references/principle-exhaust-the-design-space.md) principle made concrete. Whole-shape alternatives, not point fixes inside one shape.
+Design it twice. Require at least two structurally distinct candidates before synthesis, even when the first looks sufficient. This is the [exhaust-the-design-space](../with-rigor/references/principle-exhaust-the-design-space.md) principle made concrete. Whole-shape alternatives, not point fixes inside one shape.
 
 Screen every candidate against [`references/design-red-flags.md`](references/design-red-flags.md) before synthesis. Assume the next contributor is an agent that sees only the files it opened, copies the nearest example, and takes the shortest path that compiles. Prefer the design where a change that looks right from one file is right for the whole repo.
 
@@ -43,7 +43,7 @@ Default: proceed directly to implementation with the synthesized design. No huma
 
 Opt in to a checkpoint when the invoker explicitly asks: "/architect with checkpoint," "stop and show me before implementing," or similar. Then surface the synthesized design and pause for sign-off.
 
-The synthesis can ship as its own commit either way, as the "scaffold first" mode of the [foundational-thinking](../poteto-mode/references/principle-foundational-thinking.md) principle. Planned and scoped breakage during fill-in is fine, per the [outcome-oriented-execution](../poteto-mode/references/principle-outcome-oriented-execution.md) principle. For adversarial pressure on the design before implementing, run the **interrogate** skill on the synthesized sketch.
+The synthesis can ship as its own commit either way, as the "scaffold first" mode of the [foundational-thinking](../with-rigor/references/principle-foundational-thinking.md) principle. Planned and scoped breakage during fill-in is fine, per the [outcome-oriented-execution](../with-rigor/references/principle-outcome-oriented-execution.md) principle. For adversarial pressure on the design before implementing, run the **interrogate** skill on the synthesized sketch.
 
 If the human pushes back on the shape (in a checkpoint or after the fact), treat that as Phase A evidence. Re-ground and re-run Phase B before writing more code.
 
@@ -70,7 +70,7 @@ When you scrap:
 
 1. Re-run the **how** skill over what's been built.
 2. Redesign as if the new constraints had been day-one assumptions, per redesign-from-first-principles.
-3. Subtract before adding, per the [subtract-before-you-add](../poteto-mode/references/principle-subtract-before-you-add.md) principle. The new sketch should be smaller than the old one before it grows.
+3. Subtract before adding, per the [subtract-before-you-add](../with-rigor/references/principle-subtract-before-you-add.md) principle. The new sketch should be smaller than the old one before it grows.
 4. Return to Phase B and re-run arena.
 
 ## Outputs

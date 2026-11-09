@@ -49,7 +49,7 @@ Commit it only when the work is ambitious enough that a reviewer needs the trail
 ## Rules
 
 - Append-only. A wrong call gets a new row that supersedes it. Never edit or delete history.
-- Prefer evidence produced by committed scripts over hand-made one-offs (the [encode-lessons-in-structure](../poteto-mode/references/principle-encode-lessons-in-structure.md) principle).
+- Prefer evidence produced by committed scripts over hand-made one-offs (the [encode-lessons-in-structure](../with-rigor/references/principle-encode-lessons-in-structure.md) principle).
 
 ## Audit the log against the transcript
 
@@ -63,7 +63,7 @@ Correct the log, not the story. The audit never edits or removes a row, even an 
 
 ## Cross-model review of the trail
 
-Before handing back, spawn a `task` subagent on a different `model` family from the one that did the work. Self-review is not a substitute. The subagent reads the audit trail and the run's transcript (with `session_store_sql`, scoped to this repository or working directory), then flags what the user should pay attention to. Not a redo of the work, a scan for what's suboptimal or risky. Pick each subagent's `reasoning_effort` and fast or standard speed for the job, per the Subagents section of the **poteto-mode** skill.
+Before handing back, spawn a `task` subagent on a different `model` family from the one that did the work. Self-review is not a substitute. The subagent reads the audit trail and the run's transcript (with `session_store_sql`, scoped to this repository or working directory), then flags what the user should pay attention to. Not a redo of the work, a scan for what's suboptimal or risky. Pick each subagent's `reasoning_effort` and fast or standard speed for the job, per the Subagents section of the **with-rigor** skill.
 
 - Decisions logged with weak or absent evidence.
 - Verification steps skipped or claimed without proof in the transcript.

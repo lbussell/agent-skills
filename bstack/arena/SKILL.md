@@ -13,8 +13,8 @@ Every candidate gets the same prompt, so the prompt is the contract.
 
 1. State the artifact each candidate is producing.
 2. Derive the rubric, 3-6 concrete gradeable criteria for what success looks like on *this* task. It is the picker's tool in Phase D. Candidates only see the task.
-3. Pick the runners. Use the `arena runners` line in `~/.copilot/instructions/bstack-models.instructions.md`, passing each `<model> <effort>` entry as `model: "<model>"` and `reasoning_effort: "<effort>"`. If the file or that line is missing, default to one each on `claude-opus-5-5-xhigh` and `grok-4.7-xhigh-fast`, mapped to the matching `model` value from the `task` schema with the effort passed as `reasoning_effort`. An `auto` or `inherit-parent` entry in this line or the cross-judge line means the parent model, so omit `model` and `reasoning_effort` for it. If the `task` tool rejects a configured entry, run that seat on its family's default and say so. Families go by prefix: `claude-*`, and `grok-*` with `cursor-grok-*` and `composer-*`. A refused `composer-*` entry runs on `grok-4.7-xhigh-fast`. With no family match, use `claude-opus-5-5-xhigh`. If it rejects a default, use the closest valid slug of the same family from its error message. Spawn more runners when the arena covers multiple design directions. Use the same model N times when the work is generation-bound rather than judgment-sensitive. Pick each subagent's `reasoning_effort` and fast or standard speed for the job, per the Subagents section of the **poteto-mode** skill.
-4. Give each candidate its own output location (a git worktree where possible, otherwise `/tmp/arena-<slug>/candidate-<n>/`), per the [separate-before-serializing-shared-state](../poteto-mode/references/principle-separate-before-serializing-shared-state.md) principle.
+3. Pick the runners. Use the `arena runners` line in `~/.copilot/instructions/bstack-models.instructions.md`, passing each `<model> <effort>` entry as `model: "<model>"` and `reasoning_effort: "<effort>"`. If the file or that line is missing, default to one each on `claude-opus-5-5-xhigh` and `grok-4.7-xhigh-fast`, mapped to the matching `model` value from the `task` schema with the effort passed as `reasoning_effort`. An `auto` or `inherit-parent` entry in this line or the cross-judge line means the parent model, so omit `model` and `reasoning_effort` for it. If the `task` tool rejects a configured entry, run that seat on its family's default and say so. Families go by prefix: `claude-*`, and `grok-*` with `cursor-grok-*` and `composer-*`. A refused `composer-*` entry runs on `grok-4.7-xhigh-fast`. With no family match, use `claude-opus-5-5-xhigh`. If it rejects a default, use the closest valid slug of the same family from its error message. Spawn more runners when the arena covers multiple design directions. Use the same model N times when the work is generation-bound rather than judgment-sensitive. Pick each subagent's `reasoning_effort` and fast or standard speed for the job, per the Subagents section of the **with-rigor** skill.
+4. Give each candidate its own output location (a git worktree where possible, otherwise `/tmp/arena-<slug>/candidate-<n>/`), per the [separate-before-serializing-shared-state](../with-rigor/references/principle-separate-before-serializing-shared-state.md) principle.
 
 ## Phase B: Fan out
 
@@ -34,13 +34,13 @@ Pick the base a future maintainer can extend most easily without breaking invari
 
 ## Phase E: Graft
 
-Walk each losing candidate once more for what is worth porting into the base, usually one or two things per candidate, not most of it. Fold each graft in by hand, per the [redesign-from-first-principles](../poteto-mode/references/principle-redesign-from-first-principles.md) principle, so the result stays coherent under one mental model. Don't paste mechanically.
+Walk each losing candidate once more for what is worth porting into the base, usually one or two things per candidate, not most of it. Fold each graft in by hand, per the [redesign-from-first-principles](../with-rigor/references/principle-redesign-from-first-principles.md) principle, so the result stays coherent under one mental model. Don't paste mechanically.
 
 If the candidates converge on one shape, that is strong agreement. Note it and ship the consensus shape. No graft is needed. If they wildly diverge, Phase A was under-specified. Reframe and re-run rather than averaging the divergence.
 
 ## Phase F: Verify
 
-Verify the synthesized artifact like any other output, per the [prove-it-works](../poteto-mode/references/principle-prove-it-works.md) principle. If verification finds a problem the arena missed, either Phase A was wrong (re-frame and re-run) or a candidate caught it and you missed the graft (go back to Phase E). Don't paper over it.
+Verify the synthesized artifact like any other output, per the [prove-it-works](../with-rigor/references/principle-prove-it-works.md) principle. If verification finds a problem the arena missed, either Phase A was wrong (re-frame and re-run) or a candidate caught it and you missed the graft (go back to Phase E). Don't paper over it.
 
 ## Outputs
 

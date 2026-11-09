@@ -49,7 +49,7 @@ Each checkbox represents one unit of work and names the evidence required to che
 Check a box only after you produce and verify its evidence.
 The body is a procedural checklist, and the appendices hold background explanations and reference records.
 
-This program runs `bstack/poteto-mode/playbooks/<execution playbook>.md`.
+This program runs `bstack/with-rigor/playbooks/<execution playbook>.md`.
 <State who merges each pull request and which pull request IDs pause at merge-ready for user review.>
 
 A pull request is verified only when its unit, live, and performance checks are all checked.
@@ -60,9 +60,9 @@ A pull request is verified only when its unit, live, and performance checks are 
 
 - [ ] Present this plan to the user and wait for explicit approval before starting execution.
 - [ ] Read these files from trunk at program start and re-read them during each audit pass:
-  - [ ] `git show origin/main:bstack/poteto-mode/playbooks/<execution playbook>.md`
+  - [ ] `git show origin/main:bstack/with-rigor/playbooks/<execution playbook>.md`
   - [ ] `git show origin/main:<verification skill path>`
-  - [ ] `git show origin/main:bstack/poteto-mode/playbooks/opening-a-pr.md`
+  - [ ] `git show origin/main:bstack/with-rigor/playbooks/opening-a-pr.md`
   - [ ] `git show origin/main:bstack/<each additional skill the program uses>`
 - [ ] When the user approves execution, run periodic audit passes until all delegated work completes.
 - [ ] During each audit pass, re-read the execution playbook, verify active subagents by their side effects, replace any stalled subagent, log a row in the decision trail, and post a short status update only when tracked state changed.
@@ -80,7 +80,7 @@ A pull request is verified only when its unit, live, and performance checks are 
 ### PR mechanics, for every PR
 
 - [ ] Use `gh pr` for all pull request operations.
-- [ ] Complete and verify the change locally first, then get user approval before pushing or opening the pull request per `bstack/poteto-mode/playbooks/opening-a-pr.md`.
+- [ ] Complete and verify the change locally first, then get user approval before pushing or opening the pull request per `bstack/with-rigor/playbooks/opening-a-pr.md`.
 - [ ] Run the repository's lint and typecheck commands locally before pushing with git hooks enabled.
 - [ ] Remove unnecessary code comments and apply `bstack/unslop/SKILL.md` before requesting review.
 - [ ] Triage every automated review comment by fixing real defects and replying to false positives with a concrete technical reason.
@@ -93,7 +93,7 @@ A pull request is verified only when its unit, live, and performance checks are 
 - [ ] Use a single verifier subagent after a rebase, conflict resolution, or minor fix.
 - [ ] Audit the verification receipts before issuing a clean verdict.
 - [ ] Mark the verdict clean only when every lane passes, and send any defect back to the owner.
-- [ ] Require a fresh verdict for any new head SHA unless prior lane results remain valid under the patch-id rule in `bstack/poteto-mode/playbooks/shipping.md`.
+- [ ] Require a fresh verdict for any new head SHA unless prior lane results remain valid under the patch-id rule in `bstack/with-rigor/playbooks/shipping.md`.
 - [ ] <State the merge or stack-append rule from the execution playbook.>
 
 ### Boot recipe, for every live lane
