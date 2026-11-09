@@ -1,12 +1,14 @@
 # Subtract Before You Add
 
-When evolving a system, remove complexity first, then build. Default to subtraction.
+When you change a system, delete unused code and unnecessary abstractions before you add new behavior.
 
-Make simplification a continual investment. Leave the design slightly simpler and more capable behind the same or smaller surface than you found it.
+Leave the module with fewer moving parts and a smaller public interface than you found.
 
-- Sequence removal before construction
-- Cut before you polish (get to the minimum before investing in quality)
-- Design for observed usage, not speculative edge cases
-- No speculative validators, parsers, or guards beyond what the spec demands
-- Simplify prompts (remove redundant instructions, excessive templates)
-- When a reference has no novel content, delete it rather than leaving a stub
+Apply these rules before adding new code or instructions:
+
+- Delete dead code, unused flags, and obsolete adapters before building new features.
+- Reduce a feature or interface to its minimum required parts before polishing details.
+- Design for observed usage and explicit requirements in the specification.
+- Validate and parse inputs only at system boundaries, following [Boundary Discipline](./principle-boundary-discipline.md).
+- Remove duplicate instructions and boilerplate templates from prompts and skills.
+- Delete empty reference files and single-caller pass-through modules completely.

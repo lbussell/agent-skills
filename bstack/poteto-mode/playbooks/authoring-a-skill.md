@@ -1,12 +1,18 @@
 ### Authoring or modifying a skill
 
-**You own the skill's voice.**
+Use this playbook when creating or editing a `SKILL.md` file, its reference documents, or agent instruction files.
+Keep every skill concise, actionable, and free of rules that the model already knows.
 
-1. Use the **create-skill** skill (Cursor's built-in for authoring SKILL.md files).
-2. Validate the skill: frontmatter has `name` and `description`, referenced files exist, cross-skill links resolve.
-3. Test cases if structural. Skip if subjective.
-4. Run **Opening a PR** (stop at verified PR-ready state and wait for user approval before committing, pushing, or submitting a PR).
+1. Draft or update the skill using the [`technical-writing`](../../technical-writing/SKILL.md) and [`unslop`](../../unslop/SKILL.md) skills.
+   Write YAML frontmatter with `name` and a two-sentence `description` that states what the skill does and when to invoke it.
+   Keep `SKILL.md` focused on workflow steps and move detailed rubrics, lookup tables, or scripts into `references/` or `scripts/`.
+2. Keep only instructions that change agent decisions.
+   Start each instruction with a plain imperative verb, state one instruction per sentence, and explain the reason only when a rule would be ambiguous without it.
+   Link to existing skills by relative path to avoid duplicating rules across files, and encode repeatable checks in scripts, types, or linters per [Encode Lessons in Structure](../references/principle-encode-lessons-in-structure.md).
+   When you notice a recurring workflow that has no skill, propose a new skill to the user.
+3. Review and tighten the skill with the [`review-skill`](../../review-skill/SKILL.md) skill.
+   Confirm that the frontmatter is valid, every sentence is on its own line, and all relative file and skill links resolve.
+4. When the skill defines structural or behavioral rules that can be tested, verify it with the [Eval](./eval.md) playbook or run its scripts on a real example.
+5. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
 
-When in doubt, delete. Keep only prose that changes a decision. Tell it to do the thing and skip the reason. Explain only when the rule is confusing without one. Match tone to scope. Point at structural sources (types, READMEs, config) per the **encode-lessons-in-structure** principle. Delegate to other skills by path. Don't restate. A workflow you keep hitting but isn't captured → propose a new skill.
-
-**Reply:** summary of the skill, key design decisions, validation notes.
+In your reply, summarize what the skill does, the key design decisions, and how you validated its links and behavior.

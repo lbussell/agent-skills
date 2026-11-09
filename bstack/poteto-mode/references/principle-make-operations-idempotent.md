@@ -1,16 +1,16 @@
 # Make Operations Idempotent
 
-Design operations so they converge to the correct state regardless of how many times they run or where the previous run stopped. Every state-mutating operation should answer: "What happens if this runs twice? What happens if the previous run crashed halfway?"
+Design state-mutating operations so repeated runs and retries after a crash converge to the same target state.
 
-**Why:** Commands, lifecycle operations, and processing loops run where crashes, restarts, and retries are normal. If partial state changes the next run's outcome, every restart becomes a debugging session.
+Follow these rules when writing commands, migrations, lifecycle hooks, and processing loops:
 
-**The idea:** derive each step from the state that exists, not from what the previous run meant to do. Read the current state, compare it to the goal, and apply only the difference. A step written this way is safe to repeat, because a repeat finds nothing left to do.
+- Read the current state, compare it to the target state, and apply only the remaining changes.
+- Write updates atomically, such as writing to a staging file and renaming it into place, so a crash never leaves a corrupt target.
+- Include staleness metadata (such as a process ID, lease timestamp, or content hash) on locks, claimed jobs, and in-progress markers so the next run can detect and clean up interrupted work.
+- Compare artifacts by content hash or version identifier so retries can skip completed work reliably.
 
-Anything a run leaves behind, such as a lock, a temporary file, a half-written record, or a claimed job, must be recognizable as stale by the next run. Judge staleness by evidence that stays true wherever the previous run could have stopped, not only in the common case. A marker that the next run cannot judge turns every crash into manual cleanup. For example, write to a temporary path and rename it into place, or compare artifacts by content instead of by creation order.
+Verify idempotency by checking three conditions before finishing:
 
-**The test:**
-1. What happens if this runs twice in a row?
-2. What happens if the previous run crashed at every possible point?
-3. Does re-execution converge to the same end state?
-
-If any answer is "it depends on what state was left behind," the operation needs a reconciliation step.
+1. Run the operation twice in a row and confirm that the second run makes no unintended changes.
+2. Simulate a failure at each intermediate write or external call and confirm that the next run recovers without manual cleanup.
+3. Confirm that re-running the operation from any partial state produces the same final state.

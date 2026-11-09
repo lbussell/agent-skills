@@ -1,28 +1,19 @@
 # Boundary Discipline
 
-Place validation, type narrowing, and error handling at system boundaries. Trust internal code unconditionally. Business logic lives in pure functions. The shell is thin and mechanical.
+Validate and parse external inputs at system boundaries, pass typed domain values into internal code, and keep business logic in pure functions.
+Keep the outer adapter layer thin so you can test core logic without running the framework or transport.
 
-**Why:** Scattered validation is noisy, redundant, and gives a false sense of safety. Keep logic out of framework wiring so it can be tested without the framework.
+Separate responsibilities between the system edge and internal code:
 
-**The pattern:**
-- **At boundaries** (CLI args, config files, external APIs, network protocols): validate, return errors, handle defensively.
-- **Inside the system:** typed data, error propagation, no re-validation. Trust the types.
-- **Across the boundary.** Expose domain concepts, not the boundary's private representation. Keep general-purpose mechanism inside and special-purpose policy at the edge.
+| Layer | Responsibility |
+| --- | --- |
+| System boundary (CLI arguments, configuration files, environment variables, network payloads, database rows) | Validate raw input, parse it into domain types, and return structured errors for invalid data. |
+| Boundary interface | Expose domain types and keep wire, storage, transport, and framework types private to the adapter. |
+| Internal business logic | Accept validated domain types, trust their invariants without redundant checks, and compute results in pure functions. |
 
-**Applications:**
+Follow these rules when organizing validation and logic:
 
-Validation and error handling:
-- Validate config at parse time (the boundary), not inside business logic
-- Parse raw data into domain types at the boundary
-- Do not re-export transport, storage, framework, or wire types through the public surface
-- No redundant nil checks deep in call chains if the boundary already validated
-
-Code organization:
-- Business logic in pure functions with no framework dependencies
-- Parse functions: pure transforms from raw bytes to typed state
-- Prompt construction: structured state in, string out
-- Scoring and assessment: pure transforms from state to results
-
-**The tests:**
-- "Is this data crossing a system boundary right now?" If not, validation is redundant.
-- "Can this be a pure function that the shell just calls?" If yes, extract it.
+- Parse configuration and external inputs into domain types at the entry point before calling business logic.
+- Remove duplicate null, format, or bounds checks inside internal call chains once the boundary guarantees the type.
+- Write parsing, prompt construction, scoring, and state transitions as pure functions from typed inputs to typed outputs.
+- When a handler mixes I/O and decision logic, extract the decision logic into a pure function and call it from the handler.

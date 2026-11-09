@@ -1,15 +1,16 @@
 # Fix Root Causes
 
-When debugging, fix the fault, not the place where it surfaced. The symptom is where a wrong state became visible. The root cause is the first place the system did something it should not do, or failed to handle a state it should handle.
+Trace every defect from its visible symptom back to the first point where the system produced an invalid state or mishandled a valid state, and fix the fault at its origin.
 
-**Why:** A symptom fix hides the evidence and leaves the fault free to surface somewhere else. Each one makes the system harder to reason about, because the code now carries a workaround for a bug that nobody named.
+Follow these steps when diagnosing and fixing a bug:
 
-**Pattern:**
-- Reproduce first.
-- Ask "why" at each step until the answer is a wrong decision in the code, not a consequence of an earlier one.
-- When stuck, instrument. Read the actual error and the actual state. Do not guess.
-- Ask whether the state that triggered the symptom is legitimate. If the system may be in that state, the code that broke on it is the root cause, and handling the state there is the fix. If the state should never exist, a check where it broke hides the bug. Find what produced the state. Guards, retries, swallowed errors, clamped values, and discarded state are the usual ways to hide a bug.
-- When something fails only after a restart, suspect persisted state first: config files, caches, lock files, serialized state.
-- Check for the pattern, not just the instance. Find every place with the same fault and fix them all.
-- If a workaround needs a paragraph-long comment to justify it, the code is wrong. Fix the code, not the comment.
-- If the deciding fact took a deep dig to find, propose the cheap, always-on signal that would have shown it at first look.
+1. Reproduce the failure reliably before changing code.
+2. Trace the data flow backward from the symptom until you find the first place where the code made a wrong decision.
+3. Add temporary logging or instrumentation to inspect live errors and state whenever the execution path is unclear.
+4. Determine whether the state that triggered the failure is valid in the domain:
+   - If the state is valid, update the failing consumer to handle it.
+   - If the state violates an invariant, find and fix the upstream producer that created it, and avoid masking the fault with nil guards, retries, clamped values, or swallowed errors.
+5. When a failure occurs only after a restart, inspect persisted state first, including configuration files, caches, lockfiles, and serialized session data.
+6. Search the codebase for other call sites with the same fault pattern and fix them in the same change.
+7. When a fix seems to require a long comment to justify a workaround, redesign the fix so the code addresses the underlying cause directly.
+8. When isolating the root cause required heavy instrumentation, add a lightweight error message, assertion, or metric that surfaces the failure immediately next time.

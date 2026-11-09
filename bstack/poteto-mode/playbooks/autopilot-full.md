@@ -1,23 +1,47 @@
 ### Autopilot-full
 
-**You own the verdicts, never the PRs. One owner carries each PR from build to merge, and nothing merges until your swarm, which never wrote the code, has proven the code that lands.**
+Run this playbook to execute a queue of independent pull requests when the user has pre-authorized autonomous execution.
+Assign one owner subagent to carry each pull request from implementation through merge, and merge only after independent verifier subagents prove the change ([Prove It Works](../references/principle-prove-it-works.md)).
 
-A verdict covers one patch and green CI covers one head. Step 4 runs a full swarm once, and again only for a major change. The patch-id rule in `playbooks/shipping.md` can carry a lane's result, and every new head needs its own green CI.
+A verification verdict covers one patch and green CI covers one commit SHA.
+Run a full verification fan-out once at the code-ready head, and reuse lane results across rebases only when allowed by the patch-id rule in [Shipping](./shipping.md).
 
-1. **The operator's gates come first.** The grant covers only the queue's items, so items the operator names as theirs and PRs outside the queue stop at merge-ready. A request to state the plan is not a go.
-2. **Spawn one owner per PR, and keep its work where a replacement can find it.** Resolve the forge once for the program. GitHub CLI (`gh`) is the default. If `command -v origin` succeeds and Origin can resolve the repository, use `origin pr` for every PR operation. Otherwise stay on `gh` and record the fallback. Never require Graphite (`gt`). Each owner is a `task` subagent (`mode: "background"`; `task` inherits the current session; skip any step that needs a separate cloud agent with `Skipped in GitHub Copilot: <step>. <reason>.`) that builds, proves the change on the real artifact, opens its PR per `playbooks/opening-a-pr.md`, and merges once steps 4 and 5 clear it.
+1. Limit autonomous execution strictly to the items in the user's authorized queue.
+   Pause at a merge-ready state for any pull request outside the queue or reserved for user review.
+   If the user asks only to see the plan, present the plan and wait for explicit approval before starting.
+2. Use `gh pr` for all pull request operations.
+   Spawn one background `task` subagent (`agent_type: "general-purpose"`) per pull request to implement the change, verify it locally on the real surface, open its pull request per [Opening a PR](./opening-a-pr.md), and merge it after steps 4 and 5 pass.
+   Complete and verify the implementation locally before opening a pull request.
+   Apply [`unslop`](../../unslop/SKILL.md), remove unnecessary code comments, and run the repository's lint, typecheck, and test checks for the touched paths locally before proposing a push.
+   Ask for explicit user approval before pushing commits or opening a pull request unless the user's kickoff explicitly pre-authorized pushes and pull request creation for the queue.
+   Keep fix rounds on the current base branch unless trunk conflicts with the branch or breaks CI.
+3. Start each owner's branch directly off trunk so every pull request can verify and merge independently.
+4. When an owner reports a code-ready head SHA, fan out independent `task` verifier subagents to verify the pull request.
+   Have the verifier subagents rerun test and lint gates, exercise the changed behavior live on the target surface, and audit the diff and verification receipts.
+   Run another full verifier fan-out only if a follow-up update introduces new behavior, a redesign, or a large diff.
+   Use a single verifier subagent after a rebase, conflict resolution, or minor fix.
+   Require every verifier lane to pass and audit the verification receipts yourself before issuing a clean verdict.
+   If any verifier reports a defect, send all findings to the owner in one fix request and require a regression test covering every affected call site.
+   If a defect already exists on trunk and the pull request does not touch or reach that path, record it separately against trunk.
+   Keep a single writer per branch ([Separate Before Serializing Shared State](../references/principle-separate-before-serializing-shared-state.md)): have the owner push all fixes, or replace the owner if it stalls.
+5. Require a clean verification verdict and green CI before merging any pull request.
+   Once verification starts, have the owner rebase onto current trunk for merge preparation, report the new head SHA, and wait for CI to pass.
+   Right before merging, fetch trunk and handle any new trunk commits using the rules below:
 
-   Finish and verify the code locally first; never open a PR early on unfinished code or push after every intermediate unit. The code is ready only after the slop-strip (the `deslop` skill from the `cursor-team-kit` plugin (`/deslop`)), the `/no-comments` pass, and local self-proof. Obtain operator approval before pushing or opening a PR (unless the operator's kickoff explicitly pre-authorized PR creation for the queue), and require approval before any follow-up push during PR validation. Fix rounds stay on the current base unless trunk conflicts or breaks CI, because each rebase and push restarts CI. Run the repo's checks for the touched paths locally before proposing any push.
-3. **Run owners in parallel off trunk, never stacked,** so each PR lands on its own.
-4. **Swarm-verify once.** A full swarm runs once, at the code-ready head. Another full swarm runs only for new behavior, a redesign, or a large new diff. A rebase, a merge-conflict resolution, or a minor fix gets a single verifier at the new head. Fan out independent verifiers at the code-ready SHA per the **swarm** skill. They re-run the gates, prove the load-bearing behavior live on the real surface through its control skill (such as `control-ui` or `control-cli` from `cursor-team-kit`) or a named driver, and audit the diff. The verdict is not clean without the live lane, or before you audit the merge-ready report's receipts, because no lane trusts a claim it has not checked.
+   | Trunk change since merge prep | Required action |
+   | --- | --- |
+   | Conflict, shared file modified, or CI workflow changed | Rebase onto trunk and wait for CI to pass on the new head SHA. |
+   | Lockfile modified by both trunk and the pull request | Run a frozen install on the merge result to confirm that changed packages resolve identically to the pull request head. If the check fails, rebase to repair the lockfile. |
+   | Caller or dependency of the pull request modified | Run the pull request's checks on the merge result and merge if they pass. |
+   | Unrelated files modified | Merge without rebasing again. |
+   | Trunk forces a third rebase after merge prep | Hold the merge and sequence the overlapping changes at the coordinator level. |
 
-   Send every proven finding, whatever a lane labeled it, to the owner in one fix-forward, with a red test across every site with the same defect. A defect trunk shows without the PR is recorded against trunk and does not gate the PR, but one the PR copies or newly reaches is the PR's own. Never push a fix yourself, because each branch has one writer. Replace a stuck owner instead.
-5. **The owner merges only what you verified, tested on the trunk it lands on.** Green CI alone never authorizes a merge. Once the swarm's lanes have started, merge prep rebases onto current trunk, reports the new head, and waits for green CI.
+6. Require a verifier's proof and your explicit countersign before allowing an owner to relax any gate, such as raising a performance budget or adding an allowlist entry.
+   Reject any change that disables or soft-fails a check, and never bypass repository branch protection rules.
+   Run periodic audit passes until all delegated work completes, re-reading this playbook to catch unrecorded heads or stalled subagents.
+   Judge each active subagent by its side effects, including commits, pushed branches, and decision log rows ([`show-me-your-work`](../../show-me-your-work/SKILL.md)).
+   If a subagent errors or produces no side effects within its expected runtime, stop it and spawn a replacement immediately.
+   When an audit pass records a state change (such as a new pull request, verdict, merge, replacement subagent, or user gate), post a concise status update to the user.
+7. If the user holds or stops the run, instruct every active owner to stop writing immediately, report its current state, and preserve its branch until resumed.
 
-   Right before merging, fetch trunk and ask whether its changes can affect the patch, because rebasing for every trunk move never ends. Rebase and wait for CI when the code that would land was never tested, as with a conflict, a file both sides changed, or a change to which checks run for the PR. A lockfile both sides changed needs no rebase when a frozen install passes on the merge result and the packages the PR changes resolve there as on the head, because that install tests the lockfile that would land, and a failing install means the rebase must repair it. When trunk changed a caller of the patch or something the patch depends on, such as code it calls or a dependency version, run the patch's checks on the merge result and merge on a pass. Otherwise merge. If trunk would force a third rebase past merge prep, hold and report to the root, which sequences the colliding work.
-6. **Run the root layer.** Anything that loosens a gate, such as a raised budget or an allowlist entry, needs a verifier's proof and then your fresh countersign, because the owner is the one who wants green. Under a grant that covers approvals, that countersign is the approval, and the owner's record of it points at your countersign for a lane to check. A disabled or soft-failed check always comes out, because it stops guarding every case. Never give or bypass an approval the forge enforces, because no countersign covers it.
-
-   On the operator's go, arm `/loop 1h` to audit until no delegated work is left, because long runs drift and agents stall silently. Each tick re-reads this playbook from trunk and fixes drift, such as an unreported head or an unrecorded agent, by having its owner record it, because drift is a gap in the record, not a stall. It probes every agent, down to the leaf lanes, and judges each by its side effects, because status text and summaries can hide a stuck child. An agent is stuck when it errors, cannot start turns, or shows nothing new past its stuck-after runtime, and so is an owner that has neither pushed nor written a trail row by the first tick. One waiting on you or the operator is not stuck, so answer it. Replace a stuck agent at once, without waiting for its stop to land. A tick that changed something for the operator ends by catching them up per the **ketchup** skill, and one that changed nothing stays quiet.
-7. **Stand down at once on the operator's stop.** A hold reaches every owner as a zero-writes order. Each reports where it stands and keeps its brief until the operator releases it.
-
-**Reply:** catch the operator up per the **ketchup** skill, covering each PR's state and verdict, what merged, countersigns and why, and open operator gates, with links to each PR and the trails.
+**Reply:** Post a concise status summary covering each pull request's state, verification verdict, merge status, any countersigned gate exceptions, and open user gates, with clickable links to each pull request and decision log.

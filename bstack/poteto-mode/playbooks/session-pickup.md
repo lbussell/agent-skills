@@ -1,11 +1,19 @@
 ### Session pickup
 
-**You own the resume point. Read the prior trail, don't redo it.**
+Run this playbook to resume in-flight work from a prior session, branch, or handoff note.
 
-1. Locate the prior trail. Query prior session history with `session_store_sql`, scoped to this repository or working directory (do not query across other repositories or working directories; that crosses workspace boundaries and reads private chats from unrelated projects), or inspect a pushed branch (`task` inherits the current session; skip any step that requires a separate Cursor cloud agent with `Skipped in GitHub Copilot: <step>. <reason>.`). Read the metadata overview and last messages first, then scan back for the decision points. Parse a long session history in a `task` subagent and keep the reduced timeline in the main thread (the **principle-guard-the-context-window**). Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section.
-2. Reconstruct operational state. The branch and worktree, what already landed (`git log`, `git diff` against the base), the open todos (in `todos` and `todo_deps` via `sql`), the decisions made. The prior trail is authoritative input. Resist the bias to re-derive it.
-3. Diff done vs pending. Compare what shipped against what was planned, name the resume point, do not re-run the prior repro or redo completed work. A "let me verify from scratch" pass means you're treating the trail as untrustworthy when it's authoritative.
-4. Route the remaining work to the matching playbook and pick the verdict: continue the execution, ship a finished recommendation, ratify or override a prior conclusion, or postmortem a failed run. The pickup playbook ends here. The routed playbook owns the rest.
-5. Verify the inherited claims against the original goal on the real artifact (the **principle-prove-it-works**). A passing prior self-report is not the proof.
+Follow these steps to reconstruct state and continue the task:
 
-**Reply:** where the prior agent stopped, what you inherited vs redid (ideally nothing redone), the resume point, and the outcome.
+1. Locate the prior work trail by querying `session_store_sql` scoped to the current repository or working directory, or by inspecting the target branch and any [`show-me-your-work`](../../show-me-your-work/SKILL.md) decision log.
+   Do not query `session_store_sql` across other repositories or working directories.
+   Read the session summary and latest turns first, then scan earlier turns for key decisions.
+   When the session history is long, delegate parsing to a `task` subagent and return a concise timeline to the main thread, following [Guard the Context Window](../references/principle-guard-the-context-window.md).
+2. Reconstruct the operational state from the active branch and worktree, `git log`, `git diff` against the base branch, and open items in `todos` and `todo_deps` via `sql`.
+   Treat the recorded decisions and findings from the prior trail as authoritative input.
+3. Compare the completed work against the plan to identify the exact resume point.
+   Continue from the resume point without repeating completed steps or re-running resolved reproductions.
+4. Select the next action for the remaining work: continue implementation, deliver a completed recommendation, update a prior conclusion with new evidence, or write a postmortem for a failed run.
+   Switch to the matching playbook to execute the remaining work.
+5. Before finishing the task, verify the combined result on the target surface against the original goal, following [Prove It Works](../references/principle-prove-it-works.md).
+
+In your reply, state where the prior session stopped, which completed work you reused, where you resumed, and the final verification result.

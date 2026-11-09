@@ -1,25 +1,29 @@
 ### Perf issue
 
-**You own the measurement story. Plan, review, verify the numbers.** Tie every fix to a measurement, don't read source instead of measuring.
+Use this playbook to diagnose and fix a measured performance bottleneck.
+Tie every optimization to a baseline and post-fix measurement on the target surface.
+When you need sustained iterative improvement toward a metric target, use the [Hillclimb](./hillclimb.md) playbook.
 
-1. Capture a baseline trace via the matching control skill. Vet the baseline, and each later number, with the **benchmark-checklist** skill.
-2. `how` to ground hypotheses. Don't claim a perf ceiling without running it first.
-   Try the performance mantras in order, cheapest first:
-   1. Don't do it. Stop work whose result nothing uses rather than cheapening it.
-   2. Do it, but don't do it again.
-   3. Do it less.
-   4. Do it later.
-   5. Do it when they're not looking.
-   6. Do it concurrently.
-   7. Do it cheaper.
+1. Capture a baseline profile or trace directly on the target surface (browser, CLI, or UI).
+   Validate the baseline and every subsequent measurement against [Explain the Number](../references/principle-explain-the-number.md).
+2. Run the [`how`](../../how/SKILL.md) skill over the hot path to ground your hypotheses in the architecture.
+   Evaluate the performance mantras in order from cheapest to most complex, and stop as soon as an earlier mantra meets the target:
 
-   When an earlier mantra meets the target, stop.
-3. Plan the fix from the trace. If it crosses a function boundary, `architect` first. Delegate implementation to a `task` subagent using your configured `perf-issue` model from `~/.copilot/instructions/bstack-models.instructions.md` (default `grok-4.7-xhigh-fast`, mapped to the matching `model` value from the `task` schema with the effort passed as `reasoning_effort`). Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section. Review the diff. Capture a post-fix trace.
-   Apply the **sequence-verifiable-units** principle, verifying each attempt before trying the next.
-4. Parse and compare the artifacts (JSON to sqlite, diff). "Inconclusive" or wrong-surface is not a pass. Flag it.
-5. Report the baseline, post-fix measurement, and delta to the user.
-6. Run **Opening a PR** (stop at verified PR-ready state and wait for user approval before committing, pushing, or submitting a PR).
+   | Order | Mantra | Action |
+   | --- | --- | --- |
+   | 1 | Eliminate unused work | Delete work whose output has no consumer. |
+   | 2 | Cache repeated work | Compute the result once and reuse it across calls. |
+   | 3 | Reduce frequency | Batch, debounce, or narrow the scope of the operation. |
+   | 4 | Defer work | Move non-critical work off the critical path. |
+   | 5 | Precompute in idle time | Run the work ahead of time or in the background. |
+   | 6 | Parallelize | Run independent work concurrently. |
+   | 7 | Optimize the implementation | Use a faster algorithm, data structure, or lower-level representation. |
 
-For sustained improvement against a metric rather than a one-off fix, use the Hillclimb playbook (`playbooks/hillclimb.md`).
+3. Plan and implement one optimization at a time from the trace per [Sequence Work into Verifiable Units](../references/principle-sequence-verifiable-units.md).
+   If the change crosses a function or module boundary, run the [`architect`](../../architect/SKILL.md) skill first.
+   Delegate the implementation to a `task` subagent (`agent_type: "general-purpose"`) per [Subagents](../SKILL.md#subagents), review the diff, and capture a post-fix trace before trying another change.
+4. Parse and compare the baseline and post-fix artifacts (for example, by loading JSON traces into SQLite or diffing profiles) per [Prove It Works](../references/principle-prove-it-works.md).
+   If a measurement is inconclusive or taken on the wrong surface, report the limitation explicitly.
+5. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
 
-**Reply:** baseline number, post-fix number, delta, artifact path.
+In your reply, report the baseline measurement, the post-fix measurement, the delta, and the trace artifact paths.

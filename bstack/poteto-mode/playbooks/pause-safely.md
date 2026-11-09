@@ -1,10 +1,18 @@
 ### Pause safely
 
-**You own a clean stop. Leave a checkpoint a cold-start agent can resume from.** This is explicit only. On "keep going", "going to bed, keep going", or "don't stop", do not pause.
+Run this playbook only when the user explicitly asks to pause or stop in-flight work so a later [Session pickup](./session-pickup.md) can resume cleanly.
+When the user says to keep going or grants an unattended run, use the [Autonomous run](./autonomous-run.md) playbook.
 
-1. Stop at a safe boundary. Finish the current atomic step or back out of it. Start nothing new, and cancel any nested subagents.
-2. Take no irreversible action to pause. No PR and no push unless you already had one out.
-3. Make the work durable. Commit uncommitted edits as one clear `wip:` commit on the current branch so nothing is lost. If the tree is broken, say so in the commit body in one line.
-4. Write the resume note off-context. Capture intent, what you were doing, progress and what's verified, current state, next steps, key files, and gotchas. For the compaction trigger write it to a file like `/tmp/<slug>-resume.md`. If a show-me-your-work trail exists, point at it instead of duplicating it.
+Follow these steps to save state and pause cleanly:
 
-**Reply:** where you are in the loop, what's on disk versus still in your head (paths, no diff dumps), the commits you made and whether the tree is clean, and the first action on resume. This is a pause, not a final report.
+1. Stop at an atomic boundary by finishing the current step or reverting partial edits that leave the working tree inconsistent.
+   Cancel any running subagents and start no new tasks.
+2. Keep all changes local during the pause.
+   Do not push commits or open a pull request to save state.
+3. If the user wants a durable local checkpoint, commit tracked edits as a single `wip:` commit on the current branch.
+   If tests or builds are failing at the pause point, note the failing check in one line in the commit body.
+4. Write a concise resume note to a local file such as `.audit/<slug>-resume.md` in the working directory.
+   Record the task goal, completed and verified steps, current working tree state, next steps, key file paths, and known pitfalls.
+   If a [`show-me-your-work`](../../show-me-your-work/SKILL.md) decision log exists, link to that file for the history of completed steps.
+
+In your reply, report the current step, the resume note path, any local commits created, whether the working tree is clean, and the first action to take on resume.

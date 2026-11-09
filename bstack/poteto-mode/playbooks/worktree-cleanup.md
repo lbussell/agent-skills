@@ -1,12 +1,35 @@
 ### Worktree and simulator cleanup
 
-1. Snapshot and audit. Record `df -h /`. Query session history with `session_store_sql`, scoped to this repository or working directory, and collect the worktree paths used by current or recently active sessions. List worktrees from `git worktree list --porcelain`, never hand-typed, because tool-managed worktrees may live outside the expected parent directory (principle-encode-lessons-in-structure). For each one, record size, age, whether its branch's PR is merged (`gh pr list --head <branch> --state all`, checked against the PR's base ref), uncommitted work from `git status --porcelain`, and whether a current or recent session uses it. Classify each as `safe` (merged, clean, no session use), `verify-session` (session use unknown), `wip:N` (N tracked uncommitted edits), or `scratch:N` (N untracked files only). If session history is unavailable or incomplete, never mark a worktree `safe`.
-2. The bucket is advice, not permission. Active sessions and worktrees the user says are pinned or in use are the real artifact (principle-prove-it-works). Cross-check every candidate. A known active path wins over an otherwise `safe` classification.
-3. Verify usage before deleting. For every `verify-session` row, or anything you doubt, fan `task` subagents (`mode: "background"`) out to query session history with `session_store_sql` and report whether current or recent sessions use the worktree (principle-guard-the-context-window, transcripts are bulk). If session history cannot settle it, ask the user whether the worktree is pinned or in use. Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section.
-4. Pause on irreversible loss. `wip:N` is N tracked uncommitted edits. Show the diff and get a decision first, since removing a clean worktree is recoverable from its branch but uncommitted work is gone. `scratch:N` is untracked throwaway, safe to drop, but name the files. Per Autonomy, clean and merged and not-in-use proceeds. `wip` and in-use pause.
-5. Prune the confirmed set. Per path, `git worktree remove --force <path>`. If the dir survives on ignored build artifacts, `rm -rf` it, then `git worktree prune`. Branch refs survive, so no commits are lost. Confirm with `df -h /` and re-list.
-6. Simulators and other reclaimers. Simulators are usually the next-biggest win. `xcrun simctl --set testing delete all` (XCTestDevices clones), `xcrun simctl delete unavailable`, and `xcrun simctl runtime list` then `runtime delete <id>` for old runtimes. More when needed: Xcode `DerivedData` and `iOS DeviceSupport`, `~/Library/Application Support/Cursor` (`state.vscdb.backup`, and `snapshots/roots/<root>` where a `<root>` named for a folder you opened as a workspace balloons), package caches (pnpm, uv, brew, yarn). Clear only caches the user has not said to keep.
+Run this playbook to reclaim disk space from merged git worktrees, unused simulator runtimes, and build caches without losing active work.
 
-This is the one playbook that deletes user state with no code review to catch a slip, so the gates above are the review.
+Classify each discovered worktree using these rules:
 
-**Reply:** `df -h /` before and after with space reclaimed, the worktrees pruned, and a one-line reason for each held back (in-use by which chat, or uncommitted work).
+| Classification | Condition | Action |
+| --- | --- | --- |
+| `safe` | The branch pull request is merged, the working tree is clean, and no current or recent session uses the path. | Remove the worktree. |
+| `verify-session` | Session usage is unknown or session history is incomplete. | Verify session usage or ask the user before removing. |
+| `wip:N` | The worktree has `N` tracked uncommitted changes. | Show the diff to the user and wait for approval before removing. |
+| `scratch:N` | The branch pull request is merged and the worktree has only `N` untracked files. | List the untracked files and remove the worktree if no session uses it. |
+
+Follow these steps to audit and prune worktrees and caches:
+
+1. Record baseline free disk space with `df -h /`.
+2. Discover all worktrees from `git worktree list --porcelain` so tool-managed paths outside the default parent directory are included, following [Encode Lessons in Structure](../references/principle-encode-lessons-in-structure.md).
+   Query `session_store_sql` scoped to the current repository or working directory to find worktree paths referenced by active or recent sessions.
+   For each worktree, record its size, age, pull request merge state (`gh pr list --head <branch> --state all` compared against the base ref), `git status --porcelain` output, and session usage.
+3. Classify each worktree using the table above and cross-check every candidate against live session state, following [Prove It Works](../references/principle-prove-it-works.md).
+   If a worktree is pinned or used by an active session, keep it regardless of its git status.
+   If session history is unavailable or incomplete, classify candidates as `verify-session`.
+4. For every `verify-session` worktree, spawn a background `task` subagent to inspect session transcripts via `session_store_sql` and confirm whether any recent session uses the path, following [Guard the Context Window](../references/principle-guard-the-context-window.md).
+   If session history does not resolve whether a worktree is in use, ask the user before deleting it.
+5. Pause for explicit user approval before removing any `wip:N` worktree, because uncommitted tracked edits cannot be recovered from the branch ref.
+6. Remove each confirmed worktree with `git worktree remove --force <path>`.
+   If ignored build artifacts leave the directory on disk, remove the remaining directory and run `git worktree prune`.
+   Verify the reclaimed space with `df -h /` and `git worktree list`.
+7. When additional disk space is needed, reclaim simulator and build caches that the user has not asked to keep:
+   - Delete test simulator clones with `xcrun simctl --set testing delete all`.
+   - Delete unavailable simulators with `xcrun simctl delete unavailable`.
+   - List simulator runtimes with `xcrun simctl runtime list` and remove unused runtimes with `xcrun simctl runtime delete <id>`.
+   - Clear Xcode `DerivedData`, `iOS DeviceSupport`, and package manager caches (`pnpm`, `uv`, `brew`, and `yarn`).
+
+In your reply, report `df -h /` output before and after cleanup, total space reclaimed, the worktrees removed, and a one-line reason for each worktree kept.

@@ -1,14 +1,26 @@
 ### Trace forensics
 
-**You own the diagnosis from the artifact.**
+Run this playbook to diagnose a performance or stability issue from an existing profile, trace, spindump, or heap snapshot.
+When you need to capture a new signal from a live process, use the [Runtime forensics](./runtime-forensics.md) playbook.
 
-Distinct from **Runtime forensics**, which instruments the live process. Here the capture already exists. The artifact is a fixed dataset, read it, don't re-run it. Keep tooling generic: a DevTools or trace parser for cpuprofile and `.json.gz`, a text editor for a spindump, your heap tooling for a heapsnapshot.
+Match the captured artifact format to the tooling and target below:
 
-1. Identify the format and load it with the right tool. Parse large artifacts in a `task` subagent (the **principle-guard-the-context-window**) and keep the reduced finding in the main thread. Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section.
-2. Transform the raw artifact into a form you can query. Dump the trace or heap snapshot into sqlite, one row per sample, frame, or node. Reach the queryable shape before you read.
-3. Narrow to the cause. Query for the frames that hold the most time and walk the call tree to the hot path. For a leak, follow the retainer chain from the leaked object to a GC root. For a spindump, find the thread stuck on-CPU or blocked and its wait reason.
-4. Attribute to source. Map the hot frame to file, symbol, and line via the artifact's own symbols. A frame with no source mapping is not yet a diagnosis. Resolve the symbols, or say plainly the artifact does not carry them.
-5. If you have a paired capture, diff the before and after artifacts to confirm. Otherwise, mark the finding as the strongest hypothesis the artifact supports, not a confirmed cause.
-6. Hand back a cited diagnosis, no fix unless asked. Route to Bug fix or Perf issue once the cause is known. Throughput checkpoint stays one line: `throughput checkpoint: n/a, read-only forensics`.
+| Artifact format | Tooling | Target to isolate |
+| --- | --- | --- |
+| `.cpuprofile` or `.json.gz` trace | Trace parser or SQLite | Frames with the highest self or total time and the call tree along the hot path |
+| `.heapsnapshot` | Heap parser or SQLite | Retainer chain from the leaked object to a garbage collection root |
+| Spindump or stack sample | Text parser | Thread stuck on CPU or blocked, along with its wait reason |
 
-**Reply:** the artifact and format, the reduced finding, the source location, the artifact paths, and whether a paired capture confirmed it.
+Follow these steps to analyze the captured artifact:
+
+1. Identify the artifact format and parse large captures in a `task` subagent so only the reduced finding enters the main thread, following [Guard the Context Window](../references/principle-guard-the-context-window.md).
+2. Load the raw trace or heap snapshot into a queryable store such as SQLite with one row per sample, frame, or node.
+3. Query the store to isolate the root cause for the artifact type.
+4. Map the hot frame or retaining reference to its source file, symbol, and line using the artifact's symbol table.
+   If the artifact omits source symbols, resolve them against local build symbols or state that the capture lacks symbol data.
+5. When a baseline and regression capture are both available, compare the two artifacts to confirm the delta.
+   When only one capture exists, report the finding as the strongest hypothesis supported by the artifact.
+6. Record the throughput checkpoint as `throughput checkpoint: n/a, read-only forensics`.
+
+In your reply, report the artifact path and format, the isolated root cause, the source location, and whether a paired capture confirmed the diagnosis.
+If the user asks to fix the issue after the cause is identified, switch to the [Bug fix](./bug-fix.md) or [Perf issue](./perf-issue.md) playbook.

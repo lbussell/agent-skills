@@ -1,16 +1,17 @@
 # Prove It Works
 
-Verify every task output by checking the real thing directly. Do not infer from proxies, self-reports, or "it compiles."
+Verify every change by running and observing the real artifact directly.
+Treat compilation, file timestamps, cached outputs, and subagent self-reports as insufficient until you observe the runtime behavior yourself.
 
-**Why:** Unverified work has unknown correctness. Indirect verification (file mtimes, output freshness, agent self-reports, cached screenshots) feels cheaper than direct observation. Acting on a wrong inference costs far more than checking the source.
+Follow these rules when verifying work:
 
-Check the real thing, not a proxy:
-- Check process liveness directly, not indirectly through derived state
-- Read the actual value, not a cached or derived representation
-- When verification fails, suspect the observation method before suspecting the system
+- Run the modified command, service, UI flow, or test target and inspect its live output.
+- Query the live process, database, or rendered state directly to confirm that the change took effect.
+- Bypass caches and derived summaries so you read the authoritative value from its source.
+- When a verification check fails unexpectedly, confirm that your test harness or inspection command targets the active build and process before changing product code.
 
-## Script the check when you can
+## Automate repeatable checks
 
-The strongest proof is a deterministic script that re-runs the same comparison, not a one-time eyeball. Write the script, run it, and keep its output as an artifact a reviewer can re-run instead of trusting your word.
-
-Keep the artifact visible for the human. Commit it only for large or complex work where the trail has to be auditable later, like a big port or migration (the **show-me-your-work** skill).
+When a check requires multiple steps or comparisons, write a deterministic verification script and run it, following [Build the Lever](./principle-build-the-lever.md).
+Save the script output so the reviewer can inspect the result and rerun the check.
+For large migrations or multi-phase work that requires an auditable record, log the verification output with the [`show-me-your-work`](../../show-me-your-work/SKILL.md) skill.

@@ -1,15 +1,19 @@
 # Foundational Thinking
 
-**Structural decisions** protect option value. **Code-level decisions** protect simplicity.
+Define core types and data structures, isolate shared state, and build shared setup before you write feature logic.
 
-**Data structures first.** Get the data shape right before writing logic. Define core types early, trace every access pattern, and choose structures that match the dominant paths.
+Sequence foundational work in this order:
 
-At code level, DRY the structure, not every line. Types and data models should converge. Three similar statements still beat a premature abstraction. Prefer explicit over clever. Test behavior and edge cases, not line counts.
+1. Remove unused code and obsolete paths first, following [Subtract Before You Add](./principle-subtract-before-you-add.md).
+2. Define the core types and data structures, trace their access patterns, and match the data shape to the primary read and write paths.
+3. Check whether multiple actors can read or write the same state concurrently, and give each actor isolated state when concurrent access can occur.
+4. Land shared setup that helps every later step, including shared types, test helpers, linters, and CI checks, before building features.
+5. Deliver each capability inside a single coherent module or type so callers do not coordinate special cases.
 
-**Concurrency corollary.** Before sharing state between actors, ask "what happens if another actor modifies this concurrently?" If not "nothing", isolate.
+Apply different rules to structural decisions and local code:
 
-**Scaffold first.** If something helps every later phase, do it first. Ask "does every subsequent phase benefit from this existing?" CI, linting, test infrastructure, and shared types are scaffold. Sequence for option value: setup before features, tests before fixes. Keep commits small and single-purpose.
-
-Each increment should land a coherent abstraction or deepen one that exists. Do not spread a new capability across callers as special-case coordination.
-
-Subtraction comes before scaffolding. Remove dead code first, then lay foundations.
+| Level | Goal | Action |
+| --- | --- | --- |
+| Data models and types | Converge on one representation | Unify duplicate types and schemas across modules. |
+| Local statements | Keep control flow explicit | Keep two or three similar statements inline until a shared data model is clear. |
+| Commits and increments | Preserve reviewability | Keep each commit small, single-purpose, and verified before starting the next step. |

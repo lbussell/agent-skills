@@ -1,14 +1,22 @@
 ### Bug fix
 
-**You own this task. Plan, review, verify.** Delegate investigation and the fix to `task` subagents, stay in the lead. Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section.
+Use this playbook when diagnosing and fixing a reported defect.
+Trace every shipped line to runtime evidence per [Fix Root Causes](../references/principle-fix-root-causes.md), revert any experiment that evidence refutes, and ship only the smallest change that resolves the root cause per [Laziness Protocol](../references/principle-laziness-protocol.md).
 
-Be scientific. Every shipped line traces to runtime evidence. Belt-and-suspenders that "might help" is a hypothesis, not a fix. It does not ship. When evidence refutes a hypothesis, revert what it motivated. The smallest change the evidence justifies ships, nothing more.
+1. Reproduce the defect directly on the target surface (browser, CLI, or UI).
+   If the defect does not reproduce immediately, synthesize the trigger, tighten the input conditions, or add temporary instrumentation until the failure fires.
+   Ask the user to reproduce the issue only after exhausting local reproduction and stating the specific reason the target surface is unreachable.
+2. Isolate the root cause by binary-searching the problem space.
+   Run the [`how`](../../how/SKILL.md) skill over the affected subsystem and the [`why`](../../why/SKILL.md) skill for regression history to form candidate hypotheses.
+   Test each hypothesis with runtime evidence or logging until one root mechanism remains.
+3. Capture the failing reproduction before applying the fix per [Sequence Work into Verifiable Units](../references/principle-sequence-verifiable-units.md).
+   When the defect has a fast local test path, use the [`tdd`](../../tdd/SKILL.md) skill to write a failing test first.
+4. Plan and implement the fix.
+   If the fix crosses a function or module boundary, run the [`architect`](../../architect/SKILL.md) skill first, and use the [`council`](../../../skills/council/SKILL.md) skill when tradeoffs are contested.
+   Delegate the implementation to a `task` subagent (`agent_type: "general-purpose"`) per [Subagents](../SKILL.md#subagents) with a narrow scope and clear verification criteria.
+5. Verify the fix on the same target surface where you reproduced the defect per [Prove It Works](../references/principle-prove-it-works.md).
+   Confirm that the original reproduction now passes and remove any temporary instrumentation or reproduction scripts unless the user asked to keep them.
+   If verification is inconclusive or cannot run on the target surface, report that explicitly.
+6. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
 
-1. Reproduce it yourself on the matching surface via the control skill (Non-negotiables), even when a debug or instrumentation protocol says to ask the user to reproduce. Ask the user only with a stated, specific reason the control surface cannot reach the target, and only after driving it as far as it goes. If it won't reproduce directly, synthesize the trigger, tighten conditions, or instrument until it fires.
-2. Binary-search the cause. Form the candidate hypotheses, then rule them out until one survives. Seed them with `how` over the affected subsystem and the **why** skill for regression history. Each pass, take the split that cuts the most remaining problem space, get runtime evidence, eliminate. When program state is unclear, add instrumentation or logging and read it as the code runs. Don't guess. Drive a long or stubborn hunt with Cursor's `/loop` command. Confirm the surviving *mechanism* with runtime evidence before the step-3 architect/interrogate fan-out.
-3. Plan the fix. If it crosses a function boundary, `architect` first. Delegate implementation to a `task` subagent using your configured `bug-fix` model from `~/.copilot/instructions/bstack-models.instructions.md` (default `grok-4.7-xhigh-fast`, mapped to the matching `model` value from the `task` schema with the effort passed as `reasoning_effort`) with a specific scope.
-4. Verify on the same surface. The original repro now passes. "Inconclusive" or wrong-surface is not a pass. Flag it. Unit tests show branch behavior, not bug absence.
-5. Prove the failing repro before applying the fix (**sequence-verifiable-units**). See the **tdd** skill for the failing-test-first cadence when the bug has a cheap local test path. Skip it when the test would be expensive, integration-heavy, or unclear. Clean up temporary reproduction harnesses unless the user asked to keep new tests.
-6. Run **Opening a PR** (stop at verified PR-ready state and wait for user approval before committing, pushing, or submitting a PR).
-
-**Reply:** what was broken, root cause, fix, how you verified. Paste failing-then-passing repro output verbatim.
+In your reply, state what was broken, the root cause, the fix, and how you verified it, and include the failing-then-passing reproduction output verbatim.

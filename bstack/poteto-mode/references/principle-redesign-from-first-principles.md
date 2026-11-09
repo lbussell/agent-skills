@@ -1,10 +1,10 @@
-# Redesign From First Principles
+# Redesign from First Principles
 
-When integrating a change, don't bolt it onto the existing design. Redesign as if the requirement had been a foundational assumption from the start.
+When you integrate a new requirement into an existing system, redesign the affected component as if that requirement had existed from day one.
 
-- Read all affected files and understand the current design
-- Ask: "if we were writing this from scratch with this new requirement, what would we build?"
-- Propagate the change through every reference: types, docs, examples, rationale sections
-- Think about the whole redesign, then deliver it incrementally
+Follow these steps to integrate a new requirement cleanly:
 
-This is the method for preserving option value when integrating changes into an existing design.
+1. Read all affected files to understand the current data model, invariants, and call sites.
+2. Design the types, interfaces, and control flow you would build from scratch if the new requirement were part of the original specification.
+3. Update every affected layer, including types, callers, tests, examples, and documentation, to match the new design.
+4. Break the redesign into small, verifiable increments when the change spans multiple modules, following [Sequence Work into Verifiable Units](./principle-sequence-verifiable-units.md).

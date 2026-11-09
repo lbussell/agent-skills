@@ -1,25 +1,33 @@
 ### Eval
 
-**You own the experiment design. Plan, blind, run, synthesize.**
+Run this playbook to evaluate how a skill, instruction, or prompt change affects agent behavior using blinded parallel candidates and a blinded judge.
 
-**Non-negotiables for blinding:**
+Apply these blinding rules across the entire evaluation:
 
-- No `eval`, `test`, `judge`, `experiment`, `rubric`, `score`, `compare`, `benchmark`, `candidate`, or `arena` in any directory, file, or prompt the candidate sees.
-- The candidate prompt looks like an organic user request. State the goal, not the meta.
-- No chain-eliciting cues. Don't ask the candidate to list which skills, principles, or files they applied. Ask for design notes generally and grade chain-following from code shape, not self-report.
-- Sanitize directory and slug names. Use project-shaped names a user might pick.
-- Don't tell the candidate other candidates exist.
-- The judge can know it's judging but sees outputs by sanitized label only, never by model name.
-- Comparing two variants: one judge scores both sets in a single pass on one scale, blind to which set each came from.
+| Surface | Blinding requirement |
+| --- | --- |
+| Paths and identifiers | Use realistic project names and omit `eval`, `test`, `judge`, `experiment`, `rubric`, `score`, `compare`, `benchmark`, `candidate`, and `arena` from every path, file, and prompt visible to candidates. |
+| Candidate prompt | Write a natural user request that states the task goal and asks for general design notes. |
+| Chain attribution | Measure skill and principle usage from session history and code structure without asking candidates which skills or files they read. |
+| Candidate isolation | Give each candidate an isolated working directory with no reference to other candidates or variants. |
+| Judge inputs | Pass the rubric and candidate outputs to the judge using neutral labels, with all model and variant names removed. |
+| Variant comparison | When comparing two variants, have one judge score all outputs from both sets in a single pass on one shared scale. |
 
-**Steps:**
+Follow these steps to run the evaluation:
 
-1. **Frame.** State what variant is under test and what behavior counts as success. Write the rubric (3-6 concrete criteria) for the judge only. Hold it back from candidates.
-2. **Set up sanitized environments.** Per-candidate working dir with the variant in place. Plant any context an organic task would have: a project skeleton, the skills the candidate would naturally read.
-3. **Author one organic prompt.** What a user would type. No leakage of what's being measured.
-4. **Spawn N parallel candidates** via `task` (`mode: "background"`) on different models per the **arena** skill's Phase B. Each works in its own sanitized dir. Same prompt to each. Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section.
-5. **Spawn one blinded judge** via `task` (`agent_type: "explore"`) on a different model family per the **arena** skill's Phase C. Judge sees outputs by sanitized label and the rubric, never a model name.
-6. **Verify the chain from session history, not self-report.** Query each candidate's session history with `session_store_sql`, scoped to this repository or working directory. Do not query across other repositories or working directories. That crosses workspace boundaries and reads private chats from unrelated projects. Look at which files each candidate actually opened. Grade chain-following from the files it really read plus the shape of the code, never from the candidate's own claims.
-7. **Read every candidate output yourself** end to end. Compare to the judge's verdict. Disagreement means a model is biased or the rubric is ambiguous. Synthesize.
+1. Define the variant under test, the target behavior, and a rubric of three to six concrete criteria for the judge.
+   Keep the rubric out of all candidate directories and prompts.
+2. Create an isolated working directory for each candidate, following [Separate Before Serializing Shared State](../references/principle-separate-before-serializing-shared-state.md).
+   Populate each directory with the variant under test and the project files and skills that a real task would include.
+3. Write one realistic user prompt that describes the task without revealing what the evaluation measures.
+4. Spawn the parallel candidate subagents via `task` with `agent_type: "general-purpose"`, following Phase B of the [`arena`](../../arena/SKILL.md) skill.
+   Give every candidate the same prompt and its own working directory.
+5. After all candidates finish, spawn one blinded judge subagent via `task` with `agent_type: "explore"`, following Phase C of the [`arena`](../../arena/SKILL.md) skill.
+   Provide the judge with the rubric and the candidate outputs under neutral labels.
+6. Query each candidate's session history with `session_store_sql` scoped to the current repository or working directory to verify which files and skills the candidate opened.
+   Do not query `session_store_sql` across other repositories or working directories.
+   Grade instruction-following from the files the candidate opened and the code it produced.
+7. Read every candidate output end to end and compare your assessment with the judge's scores.
+   If your assessment and the judge's verdict disagree, inspect the outputs for model bias or rubric ambiguity before deciding.
 
-**Reply:** variant under test, rubric, per-candidate notes, judge's verdict, your synthesis, and a recommendation for whether to promote the variant.
+In your reply, report the variant under test, the rubric, per-candidate observations, the judge's scores, your synthesis, and whether to promote the variant.

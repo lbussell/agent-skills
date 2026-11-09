@@ -1,13 +1,21 @@
 ### Autonomous run
 
-**You own the exit condition. Define done, then drive to it without stopping.**
+Run this playbook when the user authorizes an unattended loop to drive a task until a specific exit condition passes.
 
-1. State the exit condition as a checkable predicate before the first iteration (tests green, repro fixed, all N PRs merged, pixel-diff zero).
-2. Pick the wake mechanism using Cursor's `/loop` command (a built-in, not a bstack skill). An event to watch (CI, a merge, a ref advancing) gets a watcher `task` subagent (`mode: "background"`) that wakes you on the event, with a long time-based heartbeat as fallback. No event gets a fixed-interval heartbeat sized to when the result is worth re-checking. Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section.
-3. Each iteration makes the smallest change the evidence justifies, verifies it against the predicate locally, keeps it if it advanced, and discards changes that didn't help. Belt-and-suspenders that "might help" gets reverted, not left to ride. Do not push commits or open PRs during the loop without explicit user approval.
-   Sequence the work via the **sequence-verifiable-units** principle, verifying each unit before the next instead of batching checks at the end.
-4. Mid-run discoveries that block the predicate are yours to fix locally. Note unrelated bugs or broken skills in your report rather than opening unrequested side-quest PRs. Do not park reversible local work for the human or use `ask_user`. Surface only irreversible actions, remote/PR gates, genuine product or preference calls no experiment can settle, or a real dead end. Keep the predicate as the main drive.
-5. Checkpoint every iteration via the **show-me-your-work** skill, a row for what changed and whether the predicate moved.
-6. Stop when the predicate is met. A plateau is not a stop, so keep going and pivot your approach to push past it. Surface a genuine dead end rather than spinning, and never relax the predicate to declare victory.
+Follow these steps to execute the loop:
 
-**Reply:** the exit condition, iterations run, what landed, what was discarded, final predicate state.
+1. Define the exit condition as a checkable predicate before starting the first iteration, such as passing a test suite, fixing a reproduction, or reaching zero visual diff.
+2. When an iteration depends on an external event such as a build, test run, or ref update, monitor the event with a background `task` subagent or a timed check.
+3. Execute the work in small, verified steps, following [Sequence Work into Verifiable Units](../references/principle-sequence-verifiable-units.md).
+   In each iteration, make the smallest change supported by evidence and test it against the exit predicate locally.
+   Keep changes that move the predicate forward and revert changes that do not improve the result.
+   Do not push commits or open pull requests during the loop unless the user explicitly pre-authorized remote actions.
+4. Resolve local issues that block the exit predicate as part of the run, following [Never Block on the Human](../references/principle-never-block-on-the-human.md).
+   Record unrelated defects or broken skills in your final report for the user.
+   Pause for user input only when you reach an irreversible action, a remote or pull request gate, an unresolvable dead end, or a product decision that no experiment can settle.
+5. Log each iteration with the [`show-me-your-work`](../../show-me-your-work/SKILL.md) skill, recording what changed, the verification evidence, and the updated predicate state.
+6. Continue iterating until the exit predicate passes.
+   If progress stalls on the current approach, form a new hypothesis and try a different approach.
+   If you exhaust all viable approaches, report the blocker and keep the original exit predicate unchanged.
+
+In your reply, report the exit predicate, the number of iterations run, the changes kept, the approaches discarded, and the final verification output.

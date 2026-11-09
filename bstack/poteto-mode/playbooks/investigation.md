@@ -1,14 +1,18 @@
 ### Investigation
 
-**You own the answer. Plan, route, write.**
+Run this playbook to answer read-only architecture, history, or tradeoff questions with a cited explanation or recommendation.
 
-Investigation requests are read-only. They produce a cited explanation or a recommendation, not a code change.
+Follow these steps to complete the investigation:
 
-1. Route through the **how** skill. For motivation questions, also route through the **why** skill.
-2. Throughput checkpoint stays one line: `throughput checkpoint: n/a, read-only investigation`.
-3. Produce the `how`-shaped output (Overview / Key Concepts / How It Works / Where Things Live / Gotchas), or a recommendation with a tradeoffs table if the request is a decision between alternatives.
-4. Apply the **unslop** skill to the reply.
+1. Run the [`how`](../../how/SKILL.md) skill to trace the subsystem architecture and runtime flow.
+   If the question asks about design history or motivation, also run the [`why`](../../why/SKILL.md) skill.
+2. Record the throughput checkpoint as `throughput checkpoint: n/a, read-only investigation`.
+3. Structure the explanation with the sections from [`how`](../../how/SKILL.md) (`Overview`, `Key Concepts`, `How It Works`, `Where Things Live`, and `Gotchas`).
+   If the user asks to choose between alternatives, provide a recommendation and a tradeoffs table.
+4. Edit the reply with the [`unslop`](../../unslop/SKILL.md) skill.
 
-No PR and no `architect` unless the investigation precedes a code change. If it does, hand back to the user and re-route to Bug fix or Feature.
+If the investigation leads to a code change, present the findings to the user first and then switch to the [Bug fix](./bug-fix.md) or [Feature](./feature.md) playbook.
 
-**Reply:** the investigation output. For "are we sure?" answers, include your real judgment with reasons. Push back if the premise is wrong (see Autonomy).
+In your reply, present the cited explanation or recommendation.
+When the user asks to validate an approach or assumption, state your technical judgment and the evidence behind it.
+If the evidence shows that the premise is wrong, say so directly.

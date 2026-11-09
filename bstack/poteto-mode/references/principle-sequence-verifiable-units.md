@@ -1,11 +1,18 @@
-# Sequence work into verifiable units
+# Sequence Work into Verifiable Units
 
-Order work as a sequence of small units, each ending in a state you can check, and don't advance until the current one is green.
+Break multi-step changes into small units, verify that each unit passes checks before starting the next, and order commits so each step is independently verifiable.
 
-**Why:** A break caught at the unit that caused it is cheap to localize. A break caught after a batch is buried, and you have already built further on a broken base. Sequencing those same units into a delivery a reviewer can replay turns "trust me" into "watch it go red, then green."
+Follow these rules while executing a multi-step change or migration:
 
-**Execution.** In a sweep, migration, or any run of similar edits, verify each change before starting the next. Each unit is a before/after bracket: known-good state, one change, run the check, then proceed. Rebase onto clean trunk first so every check measures against the real baseline. When a lever does the edits, the per-unit check is nearly free. Run it anyway.
+- Start from a clean, passing baseline on the target branch before making edits.
+- Apply one logical unit of change at a time and run the verification check ([Prove It Works](./principle-prove-it-works.md)) before starting the next unit.
+- When a script or codemod performs repetitive edits ([Build the Lever](./principle-build-the-lever.md)), run the verification check after each batch to localize any regression immediately.
 
-**Delivery.** Stack commits and PRs in the order that proves the work. The canonical shape is the failing test first, then the fix on top. Other story orders are a subtraction before the reshape, a baseline capture before the treatment, the scaffold before the feature. Each commit lands on its own and the sequence reads as an argument.
+Order commits or stacked pull requests so a reviewer can verify each step in sequence:
 
-The sequencing complement to the **prove-it-works** principle, which keeps each check real, and the **build-the-lever** principle, which makes the per-unit check cheap.
+| Change type | Verification sequence |
+| --- | --- |
+| Bug fix | Add the failing reproduction test first, then apply the fix. |
+| Refactoring | Remove dead code first ([Subtract Before You Add](./principle-subtract-before-you-add.md)), then reshape the remaining code. |
+| Performance optimization | Record the baseline benchmark first, then apply the optimization. |
+| New feature | Land core types and module boundaries first, then implement the feature behavior. |

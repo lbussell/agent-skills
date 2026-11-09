@@ -1,112 +1,165 @@
 ### Orchestrate
 
-**You own the program, never the code. Author briefs, drain the queue, keep the frontier green, decide.** For a whole project handed to one standing coordinator chat: multi-day, many stacked PRs, dozens to hundreds of subagents, the human checking in twice a day instead of every five minutes. One task driven to a predicate is Autonomous run. One ambitious run needing a bespoke workflow is figure-it-out. Route here when the work outlives any single agent. Work one agent could finish inside the session's budget is not a program.
+Run this playbook when coordinating a multi-day program across many stacked pull requests and subagents.
+If a single agent can finish the work within one session, use [Autonomous run](./autonomous-run.md) for a single predicate-driven loop or [`figure-it-out`](../../figure-it-out/SKILL.md) for a custom multi-part workflow.
 
-Ceremony must scale with the program. On cheap near-identical units, collapse it as each section directs.
+As the coordinator, author worker briefs, drain completion queues, keep the merge frontier green, and make program-level decisions while delegating all code edits to subagents.
+Scale coordination ceremony to the size of the units: collapse templates and dedicated verifier steps when running cheap, near-identical units.
 
-Three rules carry the rest.
+Follow three rules across the program:
 
-- Completions are queue events, not interrupts.
-- Every `task` spawn and every `write_agent` continuation carries the standing orders verbatim.
-- The brief is the product. A vague brief fails quietly, because a worker cannot ask you a question.
+- Treat subagent completions as queue events to process at drain points.
+- Include the standing orders in every `task` spawn and every `write_agent` continuation.
+- Write complete, self-contained briefs so workers can execute without asking questions.
 
 #### Roles and placement
 
-- **Coordinator (this chat).** Local. Frames, authors briefs, drains the inbox, owns the human report, makes judgment calls. It never authors or edits code. Conflicted merges, chain rebases, and code changes are always tasks. Mechanically landing a verified unit (fast-forward or clean cherry-pick of a worker's commit, then push) is bookkeeping the coordinator may do itself on repos where local git is cheap. Queueing finished work behind an idle stacker is how a deadline harvests nothing. The loop is agentic end to end. Agents are spawned through the `task` tool, resumed via `write_agent` with the existing `agent_id`, and drained. Pick each subagent's `model`, `reasoning_effort`, and fast or standard speed for the job, per the Subagents section. State reads and writes go to the store files at drain points.
-- **Sub-coordinator.** Always local, durable, one per track, and only when the program exceeds what one coordinator's drains can manage. A track the coordinator can drain itself needs no middle layer. Each nested layer re-pays a full orientation preamble, and a blocking sub-coordinator hides its children while the parent idles. Owns its track's units and boards, authors its workers' briefs, spawns its own workers and verifiers (nesting works to depth 3, and a nested spawn has the full `task` schema; drop `environment` since `task` inherits the current session). Rolls up aggregates at wave boundaries. Never forwards raw child reports. Cap in-flight children at what one drain can process, roughly ten, as a rolling window. Never as blocking batches, which cost the slowest child of every batch.
-- **Worker / verifier.** Spawn via `task` (drop `environment: "cloud"` and omit `environment: "local"`, as `task` inherits the current session; skip any step that needs a separate cloud agent with `Skipped in GitHub Copilot: <step>. <reason>.`). Tasks that need this machine include `control-ui` or `control-cli` runtime verification (from `cursor-team-kit`), querying session history with `session_store_sql` (scoped to this repository or working directory), simulators and local IDE state, and auth that exists only here. Subagent briefs inline what they need or point at repo paths. Prefer fewer, broader workers. One writer per worktree or branch (principle-separate-before-serializing-shared-state). Run a unit's verifier on a different model family from its worker.
+Keep the hierarchy to at most three levels: coordinator, track sub-coordinator, and worker or verifier.
+Define tracks to fit the project, such as build, verification, and landing.
 
-Depth stays at coordinator, track, worker. Author the track decomposition per project (build, landing, and verification are common cuts, not a required shape). Hard-coded swarm trees were tried and parked as too rigid.
+| Role | Placement and scope | Responsibilities |
+| --- | --- | --- |
+| Coordinator | Main session | Frame the program, author briefs, drain `inbox/`, update store files at drain points, and report to the user. Delegate code edits, conflict resolutions, and chain rebases to `task` subagents, or fast-forward and cherry-pick verified commits directly when local git operations are fast. |
+| Sub-coordinator | Background `task` subagent, one per track when a track exceeds roughly ten concurrent workers | Own the track's units, author worker briefs, maintain a rolling window of up to ten active children, and return aggregated rollups at wave boundaries. |
+| Worker | `task` subagent with one exclusive worktree or branch ([Separate Before Serializing Shared State](../references/principle-separate-before-serializing-shared-state.md)) | Implement the scoped change, run local checks, and report the branch, head SHA, and results. |
+| Verifier | `task` subagent on a different model family from the worker | Run expensive, judgment-heavy, or high-impact verification against acceptance criteria and report a verdict for `ledger.tsv`. |
 
 #### Store layout
 
-Create `orchestrate/<project-slug>/` in the current agent's store (path in the system prompt). Every file has exactly one writer. Owners publish facts, readers aggregate at read time. Keep every file plain TSV, JSON, or Markdown so it stays readable without tooling.
+Create `orchestrate/<project-slug>/` in the session workspace.
+Give each file a single writer that publishes facts while readers aggregate at read time.
+Keep every file in plain Markdown, TSV, or JSON so it remains readable without custom tooling.
 
-- `preferences.md` is the standing-orders register: numbered lines, one constraint each (model policy, stack shape and count, verification bar, forbidden paths, escalation policy). Paste it verbatim into every `task` spawn and every `write_agent` continuation. Directives decay across resumes, and each dropped one costs a human turn. When you catch yourself restating an instruction, append the line before you act (principle-encode-lessons-in-structure).
-- `overview.md` is the durable PR and issue DB. Append. Never rewrite wholesale per event.
-- `units.tsv` has one row per unit: id, track, state, branch, PR, head SHA, brief path. Update rows in place.
-- `frontier.json` is the computed merge frontier, per Stack safety.
-- `ledger.tsv` is the verification ledger, per Verification.
-- `inbox/` holds completion pointers. `gates.md` parks human gates (question, options, default on no answer).
-- `decisions.tsv` is the trail via the show-me-your-work skill.
-- `status.md` is derived from `units.tsv` and `ledger.tsv` at each drain, never hand-maintained. Regenerate it from the tables instead of narrating events into it.
+| File or directory | Purpose | Update rule |
+| --- | --- | --- |
+| `preferences.md` | Numbered standing orders covering model policy, stack shape, verification bar, forbidden paths, and escalation policy | Append a line whenever you repeat a correction ([Encode Lessons in Structure](../references/principle-encode-lessons-in-structure.md)). |
+| `overview.md` | Durable log of pull requests and issues created during the program | Append new entries as pull requests and issues are created. |
+| `units.tsv` | Unit tracking table (`id`, `track`, `state`, `branch`, `pr`, `head_sha`, `brief_path`) | Update rows in place at drain points. |
+| `frontier.json` | Computed merge frontier (ordered pull request list, branch names, head SHAs, generation number, and lowest unmerged pull request) | Recompute after every merge or stack change. |
+| `ledger.tsv` | Verification ledger keyed by pull request number and head SHA | Append one row per verification verdict. |
+| `inbox/` | Completion pointer files (`agent`, `unit`, `status`, `report_path`) | Write on subagent completion and clear at each drain. |
+| `gates.md` | Open user questions with options and default actions | Record before asking the user and clear when resolved. |
+| `decisions.tsv` | Program decision log ([`show-me-your-work`](../../show-me-your-work/SKILL.md)) | Append a row for each significant decision or audit pass. |
+| `status.md` | Human-readable program status summary | Regenerate from `units.tsv` and `ledger.tsv` at each drain. |
 
 #### The brief
 
-Your prompts to agents are your only product, and a sloppy brief compounds into slop across the whole tree. Every spawn carries all of it. A field you cannot fill is a unit you have not scoped yet.
+Include every field below when spawning a worker subagent.
+If you cannot fill a field, finish scoping the unit before spawning the worker.
 
-```
-GOAL         one sentence, the outcome, executable by a stranger with no chat access
-SCOPE        paths this unit may write; paths it may not; its exclusive worktree or branch
-CONTEXT      pointers to files and PRs; upstream reports pasted in full when this unit
-             depends on them, because workers cannot see siblings
-ACCEPTANCE   checkable criteria, one per line
-VERIFY       exact commands or the control-skill path, plus known gotchas
-TIMEBOX      rough cap on runtime; on expiry, return partial findings and stop rather than run on
-FORBIDDEN    no PR retargets or merges, no rebase, no force-push, no fixes outside scope,
-             plus unit-specific bans
-REPORT       status, branch, head SHA, PRs, verdict, what you actually ran, deviations,
-             suggested follow-ups
-STANDING     <preferences.md pasted verbatim>
+```text
+GOAL         One sentence stating the outcome so an agent with no chat history can execute it
+SCOPE        Paths this unit may edit, paths it must leave untouched, and its exclusive worktree or branch
+CONTEXT      File and PR pointers, plus full upstream reports when this unit depends on them
+ACCEPTANCE   Checkable criteria, one per line
+VERIFY       Exact verification commands or verification skill path, plus known pitfalls
+TIMEBOX      Runtime limit after which the worker returns partial findings and stops
+FORBIDDEN    No PR retargets, merges, rebases, force-pushes, or out-of-scope edits, plus unit-specific bans
+REPORT       Status, branch, head SHA, PRs, verdict, commands run, deviations, and follow-up items
+STANDING     <preferences.md pasted verbatim, or store path on initial spawn>
 ```
 
-Size the brief to the unit. A one-command unit gets the template collapsed to a paragraph that still names goal, scope, the verify command, and the report shape. A 4KB scaffold around a two-line edit costs more to write and obey than the edit. Spawns in the current session may reference the standing-orders file by store path. Verbatim paste is for every `write_agent` continuation.
+Size the brief to the unit.
+For a one-command unit, collapse the template to a single paragraph that names the goal, scope, verification command, and report format.
+Reference `preferences.md` by path on initial `task` spawns if needed, and paste `preferences.md` verbatim on every `write_agent` continuation.
 
-A sub-coordinator brief adds its track boundary and unit list, its spawn budget (`task` inherits the current session; drop `environment`), the drain protocol, and the rollup format (per child: name, status, PR, head SHA, verdict, one line, plus track status and frontier delta).
-
-A dependency is a context relay, not just ordering. Undeclared upstream context makes the worker guess. Missing fields are a refuse-to-spawn condition. Audit one sampled worker brief per sub-coordinator per wave, concurrently with the wave it samples, never as a gate in front of it. A failing brief stops that track and fixes the sub-coordinator's instructions, not just the worker, because brief quality decays late in a run. Never resume-chain a brief. Respawn fresh with consolidated scope.
+When spawning a sub-coordinator, include its track boundary, unit list, rolling concurrency cap, drain protocol, and rollup format (one line per child with name, status, pull request, head SHA, and verdict, plus track status and frontier changes).
+Paste upstream reports into dependent briefs so downstream workers have complete context.
+Audit one sampled worker brief per sub-coordinator during each wave, and if a brief is incomplete, update the sub-coordinator's instructions before refilling its wave.
+Spawn a fresh subagent with consolidated scope whenever a brief changes.
 
 #### Steps
 
-1. **Frame.** State the done predicate as something countable ("all 126 units merged, each ledger-verified `unit-test-verified` or better"). Quantify scope: units, rough effort, expected stacks, and the wall-clock budget. If one agent could finish inside that budget, stop here and run Autonomous run instead. Collapsing must not depend on another document being present. It means do the work directly in this session, plain workers where they help, verification inline, landing as you go, and none of the store, register, or pilot machinery below. Schedule landing against the budget. By roughly 70% of it, stop spawning and land what is verified. Name the tracks per project. A contested decomposition or one-way door goes through the arena skill before the pilot. Present the framing once. Reversible prep proceeds without waiting.
-2. **Install the runtime.** Create the store directory and its files. Open the trail via the show-me-your-work skill, write the standing orders before any spawn, and seed `frontier.json` from existing PRs per Stack safety.
-3. **Pilot.** Push one unit through the whole path: brief, worker, verification, stack entry, ledger row, merge. The pilot exists to falsify the brief template, the verify recipe, and the unit size while that costs one agent instead of fifty. Fix the contract from pilot evidence before any fan-out. Scale the pilot to the unit. On programs of near-identical cheap units, the first unit is the pilot, run as a normal unit with its verify command inline, and fan-out starts the moment it lands. The dedicated pilot pipeline (separate verifier agent, audit gate) is for expensive or novel unit shapes, not for clone-units where a serialized pilot has nothing to falsify.
-4. **Scale.** Spawn a rolling window of workers up to the in-flight cap, refilling as children finish. Blocking batches pay the slowest child of every batch. Spawn track sub-coordinators only past the one-drain threshold in Roles. Recompute ready work after each drain. Relay upstream reports into downstream briefs. Keep sibling communication upward only. The sampled brief audit runs alongside the wave it samples and stops the next refill on failure, not the current one.
-5. **Drain.** Run the queue discipline below at every drain point.
-6. **Land.** Landing is continuous, never a terminal phase. Integration starts with the first verified unit and runs alongside the remaining waves. On heavy repos the stacker is a standing role from wave one, integrating as units verify. On repos where local git is cheap, the coordinator lands verified units itself per Roles. Keep the frontier green before upper-stack work. Stack safety governs. Advance `frontier.json` only on merge or reported new head SHAs.
-7. **Close.** Drain the final inbox, reconcile every spawned agent to a terminal row (done, abandoned, zombie-reconciled), confirm the predicate on the real artifact, confirm every landed PR has a verdict for its current head SHA, audit the trail per show-me-your-work including its cross-model review, encode recurring corrections into `preferences.md` or the brief template. Leave the store intact. It is the postmortem.
+1. Define the exit condition as a countable predicate, such as "all 126 units merged with `unit-test-verified` or higher in `ledger.tsv`."
+   Estimate the unit count, stack layout, and wall-clock budget.
+   If a single agent can finish the work within that budget, stop here and run [Autonomous run](./autonomous-run.md) directly in this session.
+   Reserve the last 30% of the budget to stop spawning new units and land verified work.
+   If the track decomposition or architecture has competing shapes, run the [`arena`](../../arena/SKILL.md) skill before the pilot.
+   Present the framing to the user and begin local, reversible preparation.
+2. Create `orchestrate/<project-slug>/` and its store files.
+   Start `decisions.tsv` using the [`show-me-your-work`](../../show-me-your-work/SKILL.md) skill, write `preferences.md` before spawning any subagent, and initialize `frontier.json` from existing pull requests.
+3. Run one pilot unit through the entire lifecycle: brief, worker, verification, stack entry, ledger row, and merge preparation.
+   Use the pilot results to fix gaps in the brief template, verification recipe, or unit sizing before fanning out.
+   When a program consists of cheap, near-identical units, run the first unit with inline verification as the pilot and fan out as soon as it succeeds.
+4. Maintain a rolling window of active workers up to the concurrency cap, refilling slots as workers finish.
+   Spawn track sub-coordinators only when active workers exceed what one coordinator drain can process.
+   Recompute ready units after each drain and copy upstream outputs into downstream briefs.
+5. Process `inbox/` in batches at each drain point using the queue rules below.
+6. Integrate verified units continuously alongside active waves.
+   Keep the lower stack green before advancing upper links.
+   Update `frontier.json` whenever a pull request merges or reports a new head SHA.
+7. Drain the final `inbox/`, reconcile every spawned subagent to a terminal state (`done`, `abandoned`, or `zombie-reconciled`), verify the exit predicate on the real artifact, and confirm that every landed pull request has a ledger verdict matching its final head SHA.
+   Review `decisions.tsv` per [`show-me-your-work`](../../show-me-your-work/SKILL.md) (using [`council`](../../../skills/council/SKILL.md) for cross-model review when warranted), record recurring lessons in `preferences.md`, and leave the store directory intact as the postmortem record.
 
 #### Queue and drain
 
-- On a completion notification, write a pointer file to `inbox/` (agent, unit, status, report path) and return to what you were doing. Never deep-review inline. A completion that needs review becomes a verifier unit. Never review a diff inside a drain.
-- Drain in batches at four points: the end of a critical section, a track rollup, a frontier watcher wake (arm it via the loop skill, with a long heartbeat fallback), and before a human report. Begin each batch by reading and clearing `inbox/`. Arrivals during a drain wait for the next one.
-- Critical sections you finish first: authoring a brief, a stack operation, a conflict decision, writing a gate, updating ledger or frontier.
-- Each drain classifies every pointer (landed, needs-verify, failed, zombie, noise), writes the resulting rows to `units.tsv` and `ledger.tsv`, regenerates `status.md`, then spawns the next wave in one message.
-- Account for every spawned child at its track's rollup: arrived, respawned, or its scope explicitly absorbed. Silently redoing a missing child's work hides both the wasted spend and the coverage gap its result existed to close.
-- A drain turn ends with three lines: counts against the states, what changed, gates open. Detail lives in `status.md`. The full reply contract applies at checkpoints and close.
+- When a subagent finishes, write a pointer file to `inbox/` (`agent`, `unit`, `status`, `report_path`) and finish your current critical section before draining.
+- Complete critical sections before starting a drain: authoring a brief, mutating a stack, resolving a conflict, recording a user gate, or updating `ledger.tsv` and `frontier.json`.
+- Drain `inbox/` at four points: after finishing a critical section, at a track rollup, when a background watcher subagent reports a frontier event, and before reporting to the user.
+- In each drain, read and clear `inbox/`, classify each pointer (`landed`, `needs-verify`, `failed`, `zombie`, or `noise`), update `units.tsv` and `ledger.tsv`, regenerate `status.md`, and spawn the next wave of ready units.
+- If a completion requires code or behavior review, spawn a verifier unit to inspect the diff and test the change.
+- Account for every spawned child at each track rollup as completed, respawned, or absorbed into another unit.
+- End each drain turn with a three-line summary stating state counts, what changed, and open user gates.
 
 #### Stack safety
 
-- The frontier is a computed object, never narrative. Recompute `frontier.json` after every merge and stack mutation: ordered PR list, branch names, head SHAs, a generation number, the lowest unmerged PR. Walk the PR base chain from the checkout's current branch with `gh`, or `origin pr` when the program resolved the forge to Origin, so chain order and PR states come from the forge. Head SHAs come from local branch refs, so resolve it from the stacker's clone. A branch with no PR is an error, not a guess.
-- Exactly one stacker per stack may mutate topology (chain rebases, force-pushes, base retargets, merges), serialized within its stack. Record the holder in the standing orders. Chain rebases run in a `task` subagent (`task` inherits the current session; skip any step that needs a separate cloud agent with `Skipped in GitHub Copilot: <step>. <reason>.`).
-- Workers never rebase and never retarget or merge PRs. They report conflicts to the stacker rather than rebasing.
-- PR closes and retargets go through the stacker only. Closing a base PR orphans every chain above it. Merges and stack surgery are units with briefs like any other.
-- One retro watcher follows merged PRs for reverts, post-merge CI breaks, and orphaned follow-ups.
+- Recompute `frontier.json` after every merge and stack change to record the ordered pull request list, branch names, head SHAs, generation number, and lowest unmerged pull request.
+- Query `gh pr` to read pull request chain order and state, and read local branch refs in the stacker's checkout to resolve head SHAs.
+- Treat any work branch without an associated pull request as an error to fix before restacking.
+- Assign exactly one stacker per stack in `preferences.md` to serialize chain rebases, force-pushes, base retargets, and merges ([Separate Before Serializing Shared State](../references/principle-separate-before-serializing-shared-state.md)).
+- Have workers report merge conflicts to the stacker instead of rebasing, retargeting, closing, or merging pull requests themselves.
+- Route all pull request closures and base retargets through the stacker so upper branches are never orphaned.
+- Run a background watcher subagent to monitor merged pull requests for reverts, post-merge CI failures, and follow-up issues.
 
 #### Verification
 
-Scale verification to the unit. When VERIFY is a single cheap command, the worker runs it and reports the output, and the coordinator spot-checks receipts. A dedicated verifier agent (on a different model family than the worker) is for units whose verification is expensive, judgment-laden, or high-blast-radius. A verifier agent whose entire product would be rerunning one command is ceremony, not verification.
+Scale verification to the unit's risk and cost.
+When `VERIFY` is a single fast command, have the worker run it and return the output for the coordinator to spot-check.
+When verification is expensive, judgment-heavy, or high-impact, spawn a dedicated verifier subagent on a different model family from the worker ([Prove It Works](../references/principle-prove-it-works.md)).
 
-Write ledger rows to `ledger.tsv`. Check the PR's current head SHA (`gh pr view <pr> --json headRefOid`) before trusting a row. `ledger.tsv`, one row per verdict, keyed by PR number plus head SHA: `live-ui-verified | unit-test-verified | type-check-only | verifier-blocked | verifier-failed`. CI green is an input to a verdict, not a verdict. Behavioral work needs better than `type-check-only`. `verifier-blocked` is not a pass. Respawn when the environment heals. `verifier-failed` gets a fix unit, not a re-verify. A worker may self-report. A verifier overrides it on the same key. A new head SHA voids the row, so re-verify after restack. The ledger answers "was this verified", not memory and not the transcript.
+Check the pull request's current head SHA with `gh pr view <pr> --json headRefOid` before trusting any row in `ledger.tsv`.
+Record one row per verdict in `ledger.tsv`, keyed by pull request number and head SHA, using the values below:
 
-A unit is not done until its output is externalized the moment it lands, never batched to the end of the run. A worker pushes its branch, a verifier writes its ledger row, receipts land in the store. Work that exists only on one VM when that VM dies was never done.
+| Verdict | Meaning | Next action |
+| --- | --- | --- |
+| `live-ui-verified` | Verified on the live target surface | Land the pull request when CI passes. |
+| `unit-test-verified` | Verified by unit or integration tests | Land non-UI changes when CI passes. |
+| `type-check-only` | Checked only by static types or build | Run runtime or test verification for any behavioral change. |
+| `verifier-blocked` | Verification blocked by an environment issue | Respawn verification once the environment recovers. |
+| `verifier-failed` | Verification found a defect | Spawn a fix unit to repair the branch. |
+
+If both a worker and a verifier record a row for the same pull request and head SHA, the verifier's row takes precedence.
+When a rebase or fix changes a pull request's head SHA, re-verify the new head SHA.
+Require workers to push their branches and verifiers to write `ledger.tsv` rows and receipts immediately upon completion.
 
 #### Liveness and failure
 
-- Never message an agent via `write_agent` just to check on it. Messaging restarts an idle agent. Probe read-only: the ledger, `units.tsv`, `gh`, and pushed branches (skip checking a cloud agent's status in the Cursor dashboard with `Skipped in GitHub Copilot: <step>. <reason>.`). Session history timestamps in `session_store_sql` are not liveness.
-- A silent death gets a synthetic postmortem row in the inbox (unit, failure mode, last evidence, options). Replan on evidence as it arrives. Never wait for full quiescence.
-- Retry by mode: cap-hit or oom, respawn with smaller scope. Network-drop, retry as-is. Tool-error, retry on a different model. Unknown, retry once. Two retries, then abandon the unit and replan around it.
-- A zombie that returns hours late reconciles against the current frontier and ledger before anything is accepted. Salvage unique findings through a fresh unit, never a blind merge.
-- When continued spawning would produce garbage tree-wide (bad upstream output, broken acceptance, dead infra), write a stop line at the top of the standing orders, let in-flight work finish, fix the cause, clear it.
-- Bound your own infra retries the same way you bound a child's. After a few consecutive tool aborts, stop retrying. Write a terminal handoff to durable state (what is done, where it lives, the exact command to resume) and end the run.
-- After a Cursor restart: local agents are dead (`task` inherits the current session in GitHub Copilot, so skip any step that relies on separate cloud agents surviving with `Skipped in GitHub Copilot: <step>. <reason>.`). Re-read the standing orders and `units.tsv`, recompute the frontier, reattach surviving work by PR and branch rather than agent id, respawn one sub-coordinator per track from its stored brief plus current state, drain, and continue.
+- Check subagent liveness through read-only side effects (`ledger.tsv`, `units.tsv`, `gh pr`, and pushed git branches) because calling `write_agent` wakes an idle subagent.
+- When a subagent stops producing side effects past its timebox, record a synthetic failure pointer in `inbox/` (`unit`, `failure_mode`, `last_evidence`, `options`) and replan immediately.
+- Handle subagent failures by failure mode:
+
+| Failure mode | Recovery action |
+| --- | --- |
+| Context limit or out-of-memory | Respawn the unit in a fresh subagent with smaller scope. |
+| Network drop | Retry the unit with the same brief. |
+| Tool error | Retry the unit on a different model. |
+| Unknown failure | Retry once, and after two failed retries mark the unit `abandoned` and replan around it. |
+
+- If a late subagent reports back after being replaced, reconcile its output against `frontier.json` and `ledger.tsv` and extract any useful findings through a fresh unit.
+- If a broken upstream change, invalid acceptance check, or infrastructure outage threatens all active work, add a stop rule to the top of `preferences.md`, let in-flight units finish, fix the root cause, and then remove the stop rule.
+- If your own tools fail repeatedly, write a handoff note to the store stating what completed, where branches live, and how to resume, then stop the run.
+- When resuming after a session interruption, read `preferences.md` and `units.tsv`, recompute `frontier.json`, reattach surviving work by pull request and branch, and spawn fresh subagents from stored briefs.
 
 #### Escalation
 
-Reaches the human, batched into the status page rather than per item: irreversible actions (force-push to shared branches, deploys, deletions, closing someone else's PR), genuine product or preference calls no experiment settles, a standing order that contradicts observed reality, a program-level dead end that survived a replan. Park each as a `gates.md` entry before asking, and route work around it.
+Batch user escalations into `gates.md` and `status.md`, and continue non-blocked work around open gates.
+Preserve explicit user approval gates before pushing commits, opening pull requests, or merging unless the user pre-authorized those actions for the program.
 
-Never reaches the human: frontier nudges, rebase mechanics, retries, CI flake triage, review-thread triage, format fixes, scope the brief already forbids (refuse and continue), and "should I keep going". When in doubt, act and log.
+| Category | Handling | Examples |
+| --- | --- | --- |
+| Escalate to the user | Record an entry in `gates.md` with options and a recommended default, and include it in the status report. | Remote pushes and pull request actions not pre-authorized, force-pushes to shared branches, deployments, deletions, closing another author's pull request, product or preference decisions no experiment can settle, standing orders that conflict with reality, and unrecoverable blockers. |
+| Handle autonomously | Execute the action and log the decision in `decisions.tsv`. | Frontier updates, stack rebases, subagent retries, CI flake triage, review-thread triage, formatting fixes, and rejecting out-of-scope edits. |
 
-Mid-run discoveries fix only what blocks the frontier. Everything else parks in follow-ups. At this fan-out a small scope leak multiplies into PRs nobody asked for.
+During a run, fix only mid-run discoveries that block the merge frontier, and record all other findings as follow-up items in `overview.md`.
 
-**Reply:** at checkpoints and close: the predicate and the count against it from `units.tsv` and `ledger.tsv`, tracks and what each landed, the frontier (PR list plus SHAs), verdicts summary, what was abandoned and why, gates awaiting the human (the only asks), the store path, and the trail path. Numbers from the tables, not narrative. Include PR links.
+**Reply:** At checkpoints and program close, report the exit predicate and progress counts from `units.tsv` and `ledger.tsv`, track summaries, the current frontier with clickable pull request links and head SHAs, verification verdicts, abandoned units with reasons, open user gates from `gates.md`, the store path, and the `decisions.tsv` path.

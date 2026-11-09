@@ -1,12 +1,26 @@
 ### Autopilot-stack
 
-**You own the stack, never the landing. Hand the operator one linear stack of base-chained PRs to review and land.** **Autopilot-full** holds except for how verified work leaves. Each tick re-reads both playbooks from trunk, and this one wins where they differ.
+Run this playbook to build an ordered queue of dependent changes as a single linear stack of base-chained pull requests for the user to review and land.
+Follow [Autopilot-full](./autopilot-full.md) for owner management, approval gates, and independent verification, and apply the rules below for branch topology and stack delivery.
 
-1. **Run Autopilot-full's owners, minus the landing.** Owners report STACK-READY in place of merge-ready. They never rebase onto another branch, trunk included, and never retarget, merge, close a PR, or arm auto-merge, because the root owns the chain's topology and the operator owns the landing. When an item depends on another, its owner branches from that item's branch, not from trunk.
-2. **Give the topology one writer.** Owners push only their own branches and report each tip and its intended parent. Only you rebase or retarget a link, because two writers on one chain undo each other. Append each clean PR in dependency order, with its base set to its parent's branch (`origin pr edit <pr> --base <parent-branch>` or `gh pr edit <pr> --base <parent-branch>`). Never require `gt`. An owner takes your push as its new base and lease, and on a conflict resolves its own slice for you to push.
-3. **Absorb drift at the root.** Until landing starts, apply Autopilot-full step 5's test to each link and rebase the chain bottom-up where it calls for one. Then apply the patch-id rule link by link, since a link's base is its parent.
-4. **Deliver the chain, then keep your hands off it.** Each link carries its verdict in its PR. Once landing starts, nobody writes to the chain except the post-merge retarget that `playbooks/shipping.md` sanctions, because a second writer breaks a landing in flight. A mid-landing problem goes through you to the operator, and any fix waits for the operator's go.
+1. Have each owner implement its slice, verify it locally, open its pull request per [Opening a PR](./opening-a-pr.md) (after user approval unless pre-authorized for the queue), and report `STACK-READY` when verification passes.
+   When a slice depends on an earlier item in the stack, have its owner branch from that parent item's branch.
+   Reserve all rebases, base retargets, merges, auto-merge settings, and pull request closures for the coordinator and the user.
+2. Act as the sole writer for chain rebases and base retargets ([Separate Before Serializing Shared State](../references/principle-separate-before-serializing-shared-state.md)).
+   Have each owner push only to its own branch and report its branch tip and intended parent branch.
+   Append each verified pull request to the stack in dependency order by setting its base branch with `gh pr edit <pr> --base <parent-branch>`.
+   When you rebase and push a stack link, have its owner adopt the updated branch tip as its new base and resolve conflicts only within its own slice.
+3. Before landing begins, evaluate trunk changes against the bottom of the stack using step 5 of [Autopilot-full](./autopilot-full.md) and rebase the chain from the bottom up when required.
+   After restacking, check whether each link's verification verdict remains valid using the patch-id rule in [Shipping](./shipping.md).
+4. Record the verification verdict on each pull request and hand the completed stack to the user for review and landing.
+   Once landing starts through [Shipping](./shipping.md), make no further branch edits except the post-merge base retarget required by that playbook.
+   If an issue arises during landing, report it to the user and wait for explicit approval before pushing a fix.
 
-**Choosing between the autopilots.** Autopilot-full when the PRs are independent and landing authority is granted. Autopilot-stack when the operator wants review before landing, the work is sequenced or coupled, or merge authority is withheld.
+#### Choosing between autopilot playbooks
 
-**Reply:** catch the operator up per the **ketchup** skill, with links to the stack root and tip, a one-line verdict per link, and anything parked or excluded with the reason.
+| Playbook | When to use |
+| --- | --- |
+| [Autopilot-full](./autopilot-full.md) | Pull requests are independent, branch directly from trunk, and the user has granted merge authority. |
+| [Autopilot-stack](./autopilot-stack.md) | Changes depend on each other in sequence, or the user wants to review the full stack before landing. |
+
+**Reply:** Post a concise status summary with clickable links to the stack root and tip pull requests, a one-line verification verdict for each link in order, and any deferred or excluded items with their reasons.

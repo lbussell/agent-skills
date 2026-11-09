@@ -24,7 +24,7 @@ Route each situation below to its required skill, playbook, or rule:
 | Situation | Required action |
 | --- | --- |
 | Nontrivial change, architecture decision, or "are we sure?" question | Run the [`how`](../how/SKILL.md) skill to ground the architecture before deciding or editing. |
-| Empirical fork about behavior, timing, layout, output, or performance | Build a quick experiment with the [Prototype](playbooks/prototype.md) playbook to observe the answer, or answer from evidence during a read-only [Investigation](playbooks/investigation.md). |
+| Empirical fork about behavior, timing, layout, output, or performance | Build a quick experiment with the [Prototype](playbooks/prototype.md) playbook to observe the answer. During a read-only [Investigation](playbooks/investigation.md), answer from the evidence. |
 | Product or preference question that no experiment can settle | Ask the user with `ask_user`. |
 | Writing any code | Define the data shape first and choose its structure using [Model the Domain](references/principle-model-the-domain.md). |
 | Code that crosses a function or module boundary | Run the [`architect`](../architect/SKILL.md) skill to explore designs in parallel before implementing. |
@@ -37,8 +37,8 @@ Route each situation below to its required skill, playbook, or rule:
 | Submitting a pull request | Apply the [`formatting-pull-request`](../../skills/formatting-pull-request/SKILL.md) skill. |
 | Measuring performance or reporting a benchmark | Apply [Explain the Number](references/principle-explain-the-number.md) before reporting or acting on the number. |
 | Shipping a UI, CLI, or TUI change | Reproduce bugs and verify fixes directly on the target surface. |
-| Long, autonomous, or multi-phase work | Maintain a decision log using the [`show-me-your-work`](../show-me-your-work/SKILL.md) skill, and commit it when the task requires an auditable record. |
-| Broken skill encountered during a task | Report the issue to the user, and fix it locally only when asked. |
+| Long, autonomous, or multi-phase work | Maintain a decision log using the [`show-me-your-work`](../show-me-your-work/SKILL.md) skill. When the task requires an auditable record, commit the log; otherwise keep it local. |
+| Broken skill encountered during a task | Report the issue to the user, and fix it locally only when asked. Never open an unrequested pull request. |
 
 ## Principles
 
@@ -75,7 +75,7 @@ Read the linked reference file in full whenever a principle applies to your task
 | Principle | When to apply | Rule |
 | --- | --- | --- |
 | [Prove It Works](references/principle-prove-it-works.md) | Before declaring a task complete | Verify behavior directly on the real artifact. |
-| [Fix Root Causes](references/principle-fix-root-causes.md) | Debugging a defect | Trace the symptom to the first place the system went wrong and fix it there. |
+| [Fix Root Causes](references/principle-fix-root-causes.md) | Debugging a defect | Trace the symptom to the first place the system went wrong and fix it there. Add a guard only when the state it handles is valid. |
 | [Sequence Work into Verifiable Units](references/principle-sequence-verifiable-units.md) | Multi-step changes, migrations, and commit stacks | Break work into small units, verify each unit locally before starting the next, and order commits so each step passes checks. |
 | [Test Behavior, Not Implementation](references/principle-test-behavior-not-implementation.md) | Writing, updating, or reviewing tests | Assert observable outputs and behavior so tests fail only when user-facing behavior breaks. |
 | [Explain the Number](references/principle-explain-the-number.md) | Reporting or acting on a benchmark, latency, throughput, or evaluation metric | Identify the resource or code path that bounds the measurement and rule out confounding factors with evidence. |
@@ -160,7 +160,7 @@ When a standing multi-day program requires coordinating many stacked pull reques
 | [Bug fix](playbooks/bug-fix.md) | Fixing a reported defect | Reproduce the defect, isolate the root cause with runtime evidence, and verify the fix on the same surface. |
 | [Refactoring](playbooks/refactoring.md) | Restructuring code without changing behavior | Pin existing behavior first, reshape the code in small verified steps, and reduce reader load. |
 | [Perf issue](playbooks/perf-issue.md) | Improving a measured performance bottleneck | Capture a baseline trace, apply the cheapest effective optimization, and verify the delta against the baseline. |
-| [Hillclimb](playbooks/hillclimb.md) | Iteratively improving a single metric toward a target | Run a hypothesis loop with a frozen benchmark harness, a decision log, and one kept change per proven win. |
+| [Hillclimb](playbooks/hillclimb.md) | Iteratively improving a single metric toward a target | Run a hypothesis loop with a frozen benchmark harness, a decision log, and one kept change per proven win. For a one-off bottleneck, use [Perf issue](playbooks/perf-issue.md). |
 | [Prototype](playbooks/prototype.md) | Settling a design or behavioral question quickly | Build a throwaway sketch in an isolated scratch directory to compare options and observe the result. |
 | [Visual parity](playbooks/visual-parity.md) | Matching UI appearance across implementations or styling systems | Capture baseline screenshots first and iterate per component until image diffs reach zero. |
 | [Authoring or modifying a skill](playbooks/authoring-a-skill.md) | Creating or editing a `SKILL.md` file | Write concise instructions, verify all file and skill links, and review with [`review-skill`](../review-skill/SKILL.md). |
@@ -181,7 +181,7 @@ When a standing multi-day program requires coordinating many stacked pull reques
 | --- | --- | --- |
 | [Multi-phase or multi-PR plan](playbooks/multi-phase-plan.md) | Planning work that spans multiple phases or stacked pull requests | Prototype open questions and produce a structured checklist with per-PR verification gates. |
 | [Autonomous run](playbooks/autonomous-run.md) | Driving a single long-running task until an exit condition passes | Define a checkable predicate, iterate locally in small verified steps, and log each attempt. |
-| [Orchestrate](playbooks/orchestrate.md) | Coordinating a multi-day program across many pull requests and subagents | Author worker briefs, manage a durable state store, verify units into a ledger, and maintain stack safety. |
+| [Orchestrate](playbooks/orchestrate.md) | Coordinating a multi-day program across many pull requests and subagents | Author worker briefs, manage a durable state store, verify units into a ledger, and maintain stack safety. If one agent can finish the work within one session, use [Autonomous run](playbooks/autonomous-run.md). |
 | [Autopilot-full](playbooks/autopilot-full.md) | Running a queue of independent pull requests with pre-authorized autonomy | Assign one owner per pull request and verify each change independently before landing. |
 | [Autopilot-stack](playbooks/autopilot-stack.md) | Building an autonomous queue of changes as one linear pull request stack | Build and verify each link in dependency order so the user can review and land the stack. |
 | [Shipping](playbooks/shipping.md) | Landing a stack of verified pull requests | Verify each pull request independently and merge the contiguous verified run from the bottom of the stack upward. |

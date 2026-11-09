@@ -1,12 +1,33 @@
 ### Shipping
 
-**You own what lands. Verify each PR independently, land only the verified run from the root, then keep your hands off the stack.**
+Run this playbook to verify and merge a linear stack of pull requests from the bottom of the stack upward.
+Ensure every pull request has an independent verification verdict before landing, and merge only the contiguous verified prefix rooted at trunk.
 
-1. **Resolve the forge, then verify each PR independently before it lands.** GitHub CLI (`gh`) is the default. If `command -v origin` succeeds and Origin can resolve the repository, use `origin pr` for every PR operation. Otherwise stay on `gh` and record the fallback. Never require Graphite (`gt`). One verifier per PR, each a `task` subagent (`mode: "background"`; `task` inherits the current session; skip any step that needs a separate cloud agent with `Skipped in GitHub Copilot: <step>. <reason>.`), runs the change the way a user would with the matching control skill (such as `control-ui` or `control-cli` from `cursor-team-kit`), parent against head, and posts `PASS`, `PASS+NOTES`, or `FAIL` on that PR. Only a verdict from an agent that did not write the code counts, because an author checks what it meant to build. Green CI and an approving bot review are not verdicts, because neither runs the change as a user would.
-2. **Land only the contiguous verified run rooted at the bottom.** Walk up from the lowest unmerged PR and stop at the first one without `PASS` or `PASS+NOTES`. The PRs below it are the run, and the top one is the ceiling. A verified PR above an unverified one waits, because it cannot land without the code below it. One whose branch neither holds nor needs that code can move onto trunk and land on its own. It needs a fresh verdict first, because its old one ran with that code beneath it and trunk does not have it.
-3. **Re-check that the verdicts still describe the code.** A verdict covers a patch, and a chain rebase moves every PR above it to a new SHA without failing any check. Compare `git patch-id` at the verdict SHA with the current head before trusting an older verdict. When the patches differ only in tests, docs, or lint config, a lane's result stands if what it ran builds the same at both SHAs apart from noise. Noise is a difference that also shows up between two builds of the verdict SHA, or an embedded commit SHA. Report each kind of noise with its files, so a reader can check the call. The change itself still gets fresh checks and a review, because the old verdict never saw it. A lane with no build output, such as a dev server, cannot show this, so rerun it, and re-verify anything else that drifted.
-4. **Land bottom-up, one PR at a time.** Always merge the run's lowest unmerged PR, with `origin pr merge <pr>` or `gh pr merge <pr> --squash`. On Origin the plain command also merges every PR below the one you name, and on GitHub a PR whose base is still its parent's branch merges into that branch, not trunk. Read the PR back for the result (`origin pr view <pr>` or `gh pr view <pr> --json state,mergedAt,baseRefName`), because a merge command can report success when a merge queue only queued the PR, and a requested auto-merge is not a merge. A landed PR reads merged with trunk as its base, not its parent's branch. Arm `--auto` (Origin merge-when-ready or GitHub auto-merge) only on a PR whose verdict covers its current head, because it lands whatever head is ready. After a merge lands, retarget the PR whose base was the merged branch to trunk (`origin pr edit <pr> --base <trunk>` or `gh pr edit <pr> --base <trunk>`), move its patch onto the merge result, and push with `--force-with-lease`. The verdict covers the patch, not its commits, so step 3's patch-id rule decides whether the verdict survives. Merge it once its checks pass and its verdict survives.
-5. **Leave the stack alone while it lands.** Step 4's move of the next PR is the only change to a branch or base, because a merge lands whatever its branch and base hold at that moment, verdict or not. On GitHub, wait for the PR with `gh pr checks <pr> --watch` and re-read it with `gh pr view <pr> --json state,mergeStateStatus` each time the watch returns, under `/loop`, until the ceiling reads merged. On Origin, re-read the current PR with `origin pr view <pr> --checks` each time `origin pr checks <pr> --watch` returns, until the ceiling reads merged. A base that moves to trunk when its parent merges is expected, not damage to repair. If a merge stalls, find out why before you change anything.
-6. **Stop at the ceiling.** Extending the run takes new verdicts, so it is a new pass through step 1.
+1. Use `gh pr` for all pull request operations.
+   Spawn one independent `task` verifier subagent per pull request (an agent that did not write the code) to exercise the change on the target surface, compare the parent branch against the pull request head, and record `PASS`, `PASS+NOTES`, or `FAIL` ([Prove It Works](../references/principle-prove-it-works.md)).
+   Require an independent verifier verdict in addition to green CI and automated review checks.
+2. Walk up the stack from the lowest unmerged pull request and stop at the first pull request without a `PASS` or `PASS+NOTES` verdict.
+   Treat the contiguous verified pull requests below that stop point as the mergeable run and its top pull request as the ceiling.
+   Hold any verified pull request that sits above an unverified parent in the stack.
+   If an upper pull request does not depend on the unverified parent's code, rebase it onto trunk and run a fresh verification pass against trunk before merging it.
+3. Before trusting an earlier verdict after a stack rebase, compare `git patch-id` at the verified SHA against the current head SHA:
 
-**Reply:** the verified run and its ceiling, each PR's verdict and who produced it, what landed and how you confirmed it, and what the next gap needs.
+   | Comparison between verified SHA and current head | Verdict validity |
+   | --- | --- |
+   | `git patch-id` matches | Keep the existing verdict. |
+   | Only tests, documentation, or linter configs changed, and build artifacts match (apart from documented build noise such as embedded SHAs) | Keep the live lane verdict, list the ignored noise files, and run fresh checks and review on the modified files. |
+   | Production code changed, or the lane has no comparable build output (such as a live dev server) | Rerun verification on the new head SHA. |
+
+4. Confirm user approval before merging and pushing stack updates unless the user pre-authorized landing the stack.
+   Merge the lowest unmerged pull request in the verified run into trunk with `gh pr merge <pr> --squash`.
+   Enable `--auto` only when the verification verdict already covers the pull request's current head SHA.
+   Verify that the merge completed by running `gh pr view <pr> --json state,mergedAt,baseRefName` and confirming that `state` is `MERGED` and `baseRefName` is the trunk branch.
+   After each merge completes, retarget the next pull request in the stack to trunk with `gh pr edit <pr> --base <trunk>`, rebase its commits onto updated trunk, and push with `git push --force-with-lease`.
+   Apply step 3's patch-id table to the retargeted pull request and wait for CI to pass before merging it.
+5. While a pull request is landing, limit branch and base mutations strictly to the post-merge retarget and rebase in step 4.
+   Monitor CI and merge state with `gh pr checks <pr> --watch` and `gh pr view <pr> --json state,mergeStateStatus` until the ceiling pull request reaches `MERGED`.
+   If a merge stalls or a check fails, diagnose the cause and report it before modifying any branch in the stack.
+6. Stop once the ceiling pull request merges into trunk.
+   To land additional pull requests above the ceiling, start a new pass at step 1 to verify them.
+
+**Reply:** Report the verified run and its ceiling pull request, each pull request's verdict and verifier, the pull requests that merged (confirmed via `gh pr view`), and what is needed to unblock the next pull request in the stack.
