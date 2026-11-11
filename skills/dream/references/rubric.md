@@ -25,14 +25,21 @@ ORDER BY updated_at DESC
 LIMIT 100
 ```
 
-Fetch turns for candidate sessions in batches:
+Fetch turns for candidate sessions in batches (adjust `1 day` to cover candidate `created_at` values, and omit the `timestamp` filter on `source: "local"`):
 
 ```sql
 SELECT session_id, turn_index, user_message, assistant_response, timestamp
 FROM turns
 WHERE session_id IN ('<id-1>', '<id-2>')
+  AND timestamp >= now() - INTERVAL '1 day'
 ORDER BY session_id, turn_index
 ```
+
+Apply these collection rules:
+
+- Bound `turns.timestamp >= now() - INTERVAL '...'` on every `cloud` query or join touching `turns` to prevent 60-second timeouts.
+- Once the paired `source: "local"` query succeeds, ignore the SQLite fallback syntax warning from `cloud` `INTERVAL` queries.
+- Cross-check `list_sessions_and_chats` for recent sessions that have not flushed to `session_store_sql` yet, and read their `user.message` and `assistant.message` events from `~/.copilot/session-state/<id>/events.jsonl` when present.
 
 ## Memory hierarchy and routing
 
@@ -48,6 +55,7 @@ Apply these routing rules:
 - When a lesson appears in two or more repositories or reflects how the user works everywhere, route it to a user target.
 - When a lesson depends on one repository's code, build, or conventions, route it to that repository.
 - Promote a rule to `copilot-instructions.md` or `AGENTS.md` only when every session needs it before any skill triggers.
+- Keep `copilot-instructions.md` and `AGENTS.md` limited to preventative rules; put rare cleanup or recovery recipes in a skill or drop them.
 - Put multi-step procedures and situational guidance in a skill or its `references/` folder so unrelated sessions pay no token cost.
 - When a repository already uses `AGENTS.md` or `.github/copilot-instructions.md`, update the existing file.
 - Place new personal workflow skills under `<agent-skills>/skills/<name>/SKILL.md` and keep extra detail in `references/`.
@@ -67,10 +75,30 @@ Evaluate existing files before adding text:
 Accept a candidate only when it passes every check below:
 
 - **Validated with evidence.** State a verified rule and cite the session ID, turn index, and outcome that proved it; drop untested theories about why something failed.
-- **Recurring or explicit.** Require a direct user correction or evidence across at least two sessions.
+- **Recurring or explicit.** Promote a candidate only when it has evidence across at least two sessions (within the window or matched against `~/.copilot/dream-watchlist.md`) or a direct user rule for future turns; record other validated single-session candidates in `~/.copilot/dream-watchlist.md`.
 - **Captures costly wins.** Include non-obvious commands, flags, or workflows that succeeded after trial and error, alongside mistakes.
 - **Invisible in the workspace.** Drop facts that an agent can read from manifests, file trees, types, git state, or `--help`.
 - **Fits prose.** When a compiler check, test, script, or linter can block the mistake mechanically (see [correct](../../../bstack/correct/SKILL.md)), move the candidate to the structural-check section of the chat digest.
+
+## Watchlist (`~/.copilot/dream-watchlist.md`)
+
+`~/.copilot/dream-watchlist.md` stores validated single-occurrence observations across runs without loading them into normal sessions.
+
+Use one line per entry in this format:
+
+```markdown
+# Dream watchlist
+
+- `2026-11-11` | `user` | `2232f915:0` | Use `$null` for discarded output in PowerShell because `>nul` and `2>nul` create reserved `NUL` files on Windows.
+```
+
+Maintain the watchlist on every run that has substantive sessions:
+
+- Create `~/.copilot/dream-watchlist.md` when recording the first watched entry.
+- Prune any entry dated more than 30 days before the end of the review window.
+- When a new session matches a watched entry (even with different wording or in another repository), combine both citations, upgrade cross-repo matches to `user` scope, promote the candidate, and delete the watched line.
+- When a candidate passes every salience check except recurrence, append one dated bullet (`YYYY-MM-DD | <user or owner/repo> | <session_id>:<turn> | <validated rule>`).
+- Cap the file at 25 bullets by dropping the oldest entries first.
 
 ## Staging proposals
 
@@ -88,10 +116,11 @@ Spawn one child session per repository that has accepted proposals (including `a
 Include these instructions in each child's `kickoff.prompt`:
 
 1. List each proposed action (`add`, `correct`, `demote`, `prune`, or `tune-trigger`), target path, evidence (session IDs and turns), and proposed edit.
-2. Inspect the repository's current default-branch files in the worktree first; drop any candidate that is already covered or contradicted by current code.
-3. Apply remaining edits in the worktree, keep `SKILL.md` files under 50 lines with one sentence per line, and verify all relative links.
-4. Leave the changes uncommitted in the worktree for diff review; do not run `git commit`, `git push`, or open a pull request.
-5. Report back a short summary of changed files and evidence (or report that zero files changed).
+2. If local `<default_branch>` is ahead of `origin/<default_branch>`, run `git merge --ff-only <default_branch>` so recent local commits are present without a merge commit.
+3. Inspect the repository's current default-branch files in the worktree first; drop any candidate that is already covered or contradicted by current code.
+4. Apply remaining edits in the worktree, keep `SKILL.md` files under 50 lines with one sentence per line, and verify all relative links.
+5. Leave the changes uncommitted in the worktree for diff review; do not run `git commit`, `git push`, or open a pull request.
+6. Report back a short summary of changed files and evidence (or report that zero files changed).
 
 When child sessions finish:
 
