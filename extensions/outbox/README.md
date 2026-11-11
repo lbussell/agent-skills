@@ -3,6 +3,8 @@
 Outbox is a Copilot canvas extension (`outbox`) and tool (`outbox_submit_proposal`) for reviewing proposed text and yes-or-no decisions.
 Users can edit proposed values inline, then approve or decline the proposal without back-and-forth turns in chat.
 
+![Outbox canvas showing a pull request proposal](./screenshot.png)
+
 ## Setup
 
 Run `.\install.ps1` from the repository root to link `extensions\outbox` into `~/.copilot/extensions/outbox`.
