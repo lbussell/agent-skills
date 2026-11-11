@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outbox</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="outbox">
+  <header class="bar">
+    <h1 id="title" tabindex="-1">Outbox</h1>
+    <p class="count" id="count" role="status"></p>
+    <p class="conn" id="conn" role="status"></p>
+  </header>
+
+  <section class="empty" id="empty" hidden>
+    <h2>Nothing to review</h2>
+    <p>When Copilot proposes something, it shows up here. Edit it, then approve or decline.</p>
+  </section>
+
+  <ol class="proposals" id="list"></ol>
+
+  <p class="toast" id="toast" role="status"></p>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
