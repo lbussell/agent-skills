@@ -1,6 +1,8 @@
 ---
 name: unslop
-description: Cut AI tells from any writing.
+description: >-
+  Cut AI tells from any writing.
+  Use when drafting, editing, or reviewing prose, documentation, pull requests, or comments.
 ---
 
 # Unslop
@@ -57,5 +59,18 @@ Rule numbers are stable ids that other skills cite. A removed rule leaves a gap.
 29. **Active voice.** Prefer it. Catch "is/are/was/were + past participle" and name the actor: "queries are validated" becomes "the compiler validates queries", "the file is parsed by the loader" becomes "the loader parses the file". Passive is fine only when the actor is unknown or genuinely doesn't matter.
 30. **Cut adverbs, or use a stronger verb.** "runs quickly" becomes "is fast" or the number, and "significantly improves" becomes the measured delta. An adverb propping up a weak verb means the verb is wrong.
 31. **Prefer the plain word.** "utilize" and "leverage" become "use", "facilitate" becomes "help", "numerous" becomes "many", "in the event that" becomes "if". The fancier synonym is rarely clearer.
-32. **Mannered prose.** Metaphor or flourish where a literal phrase exists: aphorisms ("wire it or delete it"), rhetorical fragments for effect, personified code ("the plan holds it"), figurative verbs ("rides along", "stands on"), stock framing phrases. "A dial worth turning" becomes "a parameter worth varying". Say what you mean. Rule 26 covers the metaphor nouns.
+32. **Mannered prose.** Stock flourish where a literal phrase exists: pithy maxims ("wire it or delete it"), personified code ("the plan holds it"), figurative verbs ("rides along", "stands on"), and stock idioms ("a dial worth turning" becomes "a parameter worth varying"). Say what you mean. Rules 26 and 42 cover metaphor nouns and dressed metaphors.
 33. **Over-compression.** Dropped articles, verbless fragments, symbol-speak, and abbreviations that make the reader decode instead of read. "Parser rejects bad date → exit 2, no write" becomes "The parser rejects a bad date, exits with code 2, and writes nothing." Write whole sentences with their articles and verbs, and spell out arrows and abbreviations.
+
+### Rhetorical tics
+
+34. **Negation-first reveals.** "It is not a wrong answer. It is a non-answer." Cut the negative setup and state what the subject is ("The model returned no answer.").
+35. **Significance designation.** "It is the leg that answers the actual question." "This is the part that matters." State what that item measures or proves ("Leg 4 isolates batch size while holding the prompt fixed.").
+36. **Abstraction agency.** "Median hides it." "The table shows it." Replace metrics, charts, or tables acting on a vague "it" with the underlying fact and cause ("The median stays at 12 ms because only the slowest 2% of requests stall.").
+37. **Deferred nouns.** "Five of those six rows are one cluster. The sixth is not." Complete elliptical follow-up sentences with the missing noun or value ("Five of the six rows cluster around 10 ms, and the sixth spikes to 240 ms.").
+38. **Coy or thesis-shaped headings.** `What "exhausted" means`, `The one gap that does clear the bar`. Replace teaser clauses and miniature claims with plain topic headings (`Exhaustion criteria`, `Remaining gap`).
+39. **Aphoristic closers.** "It is the kind of number that looks like evidence and is not." Delete mic-drop closing lines, or replace them with the concrete flaw ("That average mixes cached and uncached runs.").
+40. **Straw-man knockdowns.** "'It thinks twice as long' is the obvious reading, and it is wrong." Lead with the actual cause ("Wall time doubles because the worker waits on a lock."). When readers commonly make a specific misreading, explain why it fails without a theatrical takedown.
+41. **Fragment cadence.** "Six legs. One GPU, one server build, one sampler, one question set." Combine staccato fragments and repeated "one X, one Y" beats into a complete sentence ("All six legs ran on one GPU with the same server build, sampler, and question set.").
+42. **Dressed metaphors.** "That is information loss wearing the costume of a style fix." "X masquerading as Y." State the literal defect ("That style edit drops information.").
+43. **Label-first framing.** Coining clinical category names ("significance designation", "abstraction agency") to package one-off points. Save named labels for reusable checklists or glossaries, and state ordinary observations in plain verbs and nouns.
