@@ -49,5 +49,6 @@ Delete unused parts of the template.
 
 ## Review
 
-Before creating the pull request, propose `Title` (`text`), `Body` (`text`), and `Submit as draft` (`checkbox`) in the `outbox` canvas.
-Wait for the user's response in Outbox, then create the pull request with the approved values.
+Before creating the pull request, call `outbox_submit_proposal` with `Title` (`text`), `Body` (`text`), and `Submit as draft` (`yes_no`) decisions.
+End your turn to wait for the `[outbox]` reply.
+When the user approves the proposal, create the pull request with the approved values.
