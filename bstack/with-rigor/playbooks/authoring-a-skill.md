@@ -13,6 +13,6 @@ Keep every skill concise, actionable, and free of rules that the model already k
 3. Review and tighten the skill with the [`review-skill`](../../review-skill/SKILL.md) skill.
    Confirm that the frontmatter is valid, every sentence is on its own line, and all relative file and skill links resolve.
 4. When the skill defines structural or behavioral rules that can be tested, verify it with the [Eval](./eval.md) playbook or run its scripts on a real example.
-5. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
+5. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before pushing or opening a pull request.
 
 In your reply, summarize what the skill does, the key design decisions, and how you validated its links and behavior.

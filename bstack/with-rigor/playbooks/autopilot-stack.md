@@ -12,7 +12,7 @@ Follow [Autopilot-full](./autopilot-full.md) for owner management, approval gate
    When you rebase and push a stack link, have its owner adopt the updated branch tip as its new base and resolve conflicts only within its own slice.
 3. Before landing begins, evaluate trunk changes against the bottom of the stack using step 5 of [Autopilot-full](./autopilot-full.md) and rebase the chain from the bottom up when required.
    After restacking, check whether each link's verification verdict remains valid using the patch-id rule in [Shipping](./shipping.md).
-4. Record the verification verdict on each pull request and hand the completed stack to the user for review and landing.
+4. Record the verification verdict in each pull request's review details section (see [`formatting-pull-request`](../../../skills/formatting-pull-request/SKILL.md)) and hand the completed stack to the user for review and landing.
    Once landing starts through [Shipping](./shipping.md), make no further branch edits except the post-merge base retarget required by that playbook.
    If an issue arises during landing, report it to the user and wait for explicit approval before pushing a fix.
 

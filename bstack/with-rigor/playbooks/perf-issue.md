@@ -24,6 +24,6 @@ When you need sustained iterative improvement toward a metric target, use the [H
    Delegate the implementation to a `task` subagent (`agent_type: "general-purpose"`) per [Subagents](../SKILL.md#subagents), review the diff, and capture a post-fix trace before trying another change.
 4. Parse and compare the baseline and post-fix artifacts (for example, by loading JSON traces into SQLite or diffing profiles) per [Prove It Works](../references/principle-prove-it-works.md).
    If a measurement is inconclusive or taken on the wrong surface, report the limitation explicitly.
-5. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
+5. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before pushing or opening a pull request.
 
 In your reply, report the baseline measurement, the post-fix measurement, the delta, and the trace artifact paths.

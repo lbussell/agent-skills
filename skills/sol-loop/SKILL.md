@@ -103,13 +103,10 @@ no concern of your own. Stuck: an item stays disputed after two replies,
 or budget ends. Show both sides in 2-3 lines each. The user decides.
 Budget end is not approval.
 
-Do not push during the loop. Push after agreement only if the user asked
-to push, ship, or update the PR. If you push to a PR, add above the model
-blurb:
+Do not push during the loop.
+Push after agreement only if the user asked to push, ship, or update the PR.
 
-`Reviewed with sol-loop: <N> rounds with <model>. Sol verdict: approved`.
-
-Add `on <effort>` only if verified.
+If you push to a PR, add this line in a `<details/>` element: `Reviewed by <model>: <N> rounds, approved`.
 
 Report: rounds, model, what Sol changed, diff size before/after, fixed and
 declined findings with reasons, usage if exposed (else say not), pushed or not.

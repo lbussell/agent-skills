@@ -13,6 +13,6 @@ Treat the captured baseline screenshots as the specification and verify equivale
    When migrating independent components in parallel with `task` subagents (`agent_type: "general-purpose"`) per [Subagents](../SKILL.md#subagents), isolate each subagent in its own worktree per [Separate Before Serializing Shared State](../references/principle-separate-before-serializing-shared-state.md).
 4. Verify each migrated component on the target surface by running the image diff against its baseline.
    Treat any nonzero pixel diff as a failure, inspect the diff image to locate the styling discrepancy, and iterate until the pixel delta reaches zero.
-5. Run [Opening a PR](./opening-a-pr.md) for each verified component or batch, stopping at a PR-ready state to wait for user approval before committing, pushing, or opening a pull request.
+5. Run [Opening a PR](./opening-a-pr.md) for each verified component or batch, stopping at a PR-ready state to wait for user approval before pushing or opening a pull request.
 
 In your reply, list the migrated components, the pixel diff result for each component, the path to the screenshot comparison script, and any remaining components.

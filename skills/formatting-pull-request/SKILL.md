@@ -25,7 +25,7 @@ Write in this order:
 3. Use bullets for multiple concrete changes, versions, or links. Use present tense.
 4. Add an issue relationship with `Fixes #123`, `Part of #123`, or `Related:` when one exists.
 
-Never include details about what tests you ran or what commands you ran for validation.
+Do not list tests or commands you ran in the main description.
 Checks/tests run as part of PR validation.
 If you ran a pipeline for validation, link to that.
 
@@ -51,4 +51,3 @@ Delete unused parts of the template.
 
 Before creating the pull request, propose `Title` (`text`), `Body` (`text`), and `Submit as draft` (`checkbox`) in the `outbox` canvas.
 Wait for the user's response in Outbox, then create the pull request with the approved values.
-

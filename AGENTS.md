@@ -30,3 +30,4 @@ Therefore, the skill body should not contain qualifiers about when to use the sk
 Use simplified technical english for agent instructions.
 Start skills small with the minimum amount of content.
 Only add content over time as necessary to improve agent performance on specific tasks.
+In Markdown, write one sentence per line.

@@ -29,6 +29,6 @@ Test one change per iteration, measure the result on the real artifact per [Prov
    Revert any metric improvement that breaks behavior, and keep any simplification that preserves the metric per [Laziness Protocol](../references/principle-laziness-protocol.md).
 7. Stop when the stop predicate passes or when all remaining hypotheses have marginal expected impact.
    If progress stalls while promising hypotheses remain blocked, report the blocker to the user.
-8. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
+8. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before pushing or opening a pull request.
 
 In your reply, report the metric and target, the baseline and final numbers with percent delta, the count of kept and reverted iterations, a one-line summary of each kept fix, the `decision.tsv` path, and the next hypothesis you would try.

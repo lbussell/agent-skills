@@ -23,7 +23,7 @@ Own the design, planning, review, and verification in the main session, and dele
 6. Verify the feature directly on the target surface (browser, CLI, or UI) per [Prove It Works](../references/principle-prove-it-works.md).
    If verification is inconclusive or cannot reach the target surface, report the gap explicitly.
 7. If the design is contested or carries high-stakes tradeoffs, run the [`council`](../../../skills/council/SKILL.md) skill before shipping.
-8. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
+8. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before pushing or opening a pull request.
 
 For tightly coupled work such as a single feature or migration, assign one owner with the throughput checkpoint inline so that owner can fan out after the blocking phase.
 Use parent-level fan-out only when slices produce independent artifacts such as audits, cross-subsystem investigations, or competing experiments.

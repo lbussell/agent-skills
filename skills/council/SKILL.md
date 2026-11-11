@@ -29,19 +29,19 @@ For a code review, ask each delegate for a score out of 10.
 Count each full review pass as one round.
 A fresh review after fixes starts a new round.
 
-If the work ends in a pull request, put the results in the PR description.
-Put this section before the model and harness line at the end:
+If the work ends in a pull request, put the results in the PR's review details section (see the `formatting-pull-request` skill):
 
 ```markdown
-## Council review
+<details>
+<summary>Review details</summary>
 
-Rounds: 2
-
-| Delegate | Round 1 | Round 2 |
+| Reviewer | Round 1 | Round 2 |
 | --- | --- | --- |
 | Claude Opus | 7/10 | 9/10 |
 | GPT Sol | 8/10 | 10/10 |
 | Gemini Pro | 7/10 | 9/10 |
+
+</details>
 ```
 
 If a delegate gives no score, write `no score`. Do not invent one.

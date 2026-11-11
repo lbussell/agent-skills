@@ -17,6 +17,6 @@ Trace every shipped line to runtime evidence per [Fix Root Causes](../references
 5. Verify the fix on the same target surface where you reproduced the defect per [Prove It Works](../references/principle-prove-it-works.md).
    Confirm that the original reproduction now passes and remove any temporary instrumentation or reproduction scripts unless the user asked to keep them.
    If verification is inconclusive or cannot run on the target surface, report that explicitly.
-6. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
+6. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before pushing or opening a pull request.
 
 In your reply, state what was broken, the root cause, the fix, and how you verified it, and include the failing-then-passing reproduction output verbatim.

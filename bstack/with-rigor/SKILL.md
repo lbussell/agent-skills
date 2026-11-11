@@ -164,7 +164,7 @@ When a standing multi-day program requires coordinating many stacked pull reques
 | [Prototype](playbooks/prototype.md) | Settling a design or behavioral question quickly | Build a throwaway sketch in an isolated scratch directory to compare options and observe the result. |
 | [Visual parity](playbooks/visual-parity.md) | Matching UI appearance across implementations or styling systems | Capture baseline screenshots first and iterate per component until image diffs reach zero. |
 | [Authoring or modifying a skill](playbooks/authoring-a-skill.md) | Creating or editing a `SKILL.md` file | Write concise instructions, verify all file and skill links, and review with [`review-skill`](../review-skill/SKILL.md). |
-| [Opening a PR](playbooks/opening-a-pr.md) | Concluding any code-changing playbook | Stop at a verified PR-ready state, wait for user approval to commit or push, and format the pull request with [`formatting-pull-request`](../../skills/formatting-pull-request/SKILL.md). |
+| [Opening a PR](playbooks/opening-a-pr.md) | Concluding any code-changing playbook | Stop at a verified PR-ready state, wait for user approval to push or open a pull request, and format the pull request with [`formatting-pull-request`](../../skills/formatting-pull-request/SKILL.md). |
 
 ### Investigate, diagnose, and evaluate
 

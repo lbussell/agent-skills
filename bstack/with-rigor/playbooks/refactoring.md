@@ -19,6 +19,6 @@ For large migrations or cross-cutting structural work, use the [`figure-it-out`]
    For larger reshapes, run an equivalence check by comparing old and new outputs, replaying a recorded baseline, or executing a smoke run on the target surface.
 7. Confirm that the change reduces complexity per [Minimize Reader Load](../references/principle-minimize-reader-load.md).
    If a diff does not lower reader load, revert it.
-8. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before committing, pushing, or opening a pull request.
+8. Run [Opening a PR](./opening-a-pr.md) to stop at a verified PR-ready state and wait for user approval before pushing or opening a pull request.
 
 In your reply, state what structure changed, the behavior pin you held it against, the equivalence proof, the reader-load improvement, and any speculative changes you reverted.

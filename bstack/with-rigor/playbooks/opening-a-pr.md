@@ -3,7 +3,7 @@
 Run this playbook at the end of any code-changing playbook.
 
 - Complete implementation, self-review, and real-surface verification locally before touching the remote repository.
-- Present the verified local change to the user and wait for explicit approval before committing, pushing, or submitting a pull request.
+- Present the verified local change to the user and wait for explicit approval before pushing or submitting a pull request.
 - Submit a pull request only when the change is verified and ready for review.
 - Keep work on the current checkout and branch unless the user asks for a worktree or a new branch.
 - Never run `git reset --hard` on a branch with user state.
