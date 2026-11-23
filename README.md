@@ -14,7 +14,8 @@ copilot skill add bstack/skills
 
 ## Install Extensions (GitHub Copilot)
 
-Run `.\install.ps1` to install extensions in `~/.github/extensions`.
+Copy an extension's folder from `extensions` into `~/.copilot/extensions`.
+For example, copy `extensions\outbox` to `~/.copilot/extensions/outbox`.
 
 ## Attribution
 

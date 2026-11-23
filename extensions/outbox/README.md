@@ -7,7 +7,7 @@ Users can edit proposed values inline, then approve or decline the proposal with
 
 ## Setup
 
-Run `.\install.ps1` from the repository root to link `extensions\outbox` into `~/.copilot/extensions/outbox`.
+Copy `extensions\outbox` into `~/.copilot/extensions/outbox`.
 
 ## Usage
 
