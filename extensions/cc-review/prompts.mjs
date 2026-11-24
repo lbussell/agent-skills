@@ -92,10 +92,7 @@ export const KINDS = [...new Set(Object.values(ANGLES).map((a) => a.kind))];
 
 const oneLine = (text) => text.replace(/\s+/g, " ").trim();
 
-const FINDING_FIELDS = `Return \`{ "findings": [...] }\`.
-Return \`{ "findings": [] }\` when you have no findings.
-Do not return a placeholder finding.
-Each finding has these fields:
+const FINDING_ITEM_FIELDS = `Each finding has these fields:
 - \`file\`: repository-relative path.
 - \`line\`: 1-based line number in the new version of the file.
   For deleted code, use the nearest surviving line in the same hunk.
@@ -106,8 +103,19 @@ Each finding has these fields:
 - \`kind\`: ${KINDS.map((k) => `\`${k}\``).join(", ")}.
 - \`severity\`: \`high\` for a crash, data loss or corruption, a security flaw, a broken caller contract, or a major hot-path stall; \`medium\` for wrong behavior on a reachable edge case, significant waste or duplication, or a clear rule violation; \`low\` for a minor local defect or cleanup.`;
 
+const FINDING_FIELDS = `Return \`{ "findings": [...] }\`.
+Return \`{ "findings": [] }\` when you have no findings.
+Do not return a placeholder finding.
+${FINDING_ITEM_FIELDS}`;
+
+const SINGLE_REVIEW_FIELDS = `Return \`{ "scope": "...", "empty": false, "findings": [...] }\`.
+Set \`scope\` to one or two sentences describing what you reviewed (target, base, and whether uncommitted or untracked changes were included).
+If there is nothing to review, set \`empty\` to \`true\` and \`findings\` to \`[]\`.
+Otherwise, set \`empty\` to \`false\`, and return \`findings: []\` when you have no findings.
+Do not return a placeholder finding.
+${FINDING_ITEM_FIELDS}`;
+
 function scopeBlock(scope) {
-    const files = scope.files.map((path) => `- \`${path}\``).join("\n");
     const source = scope.local
         ? `The working tree contains the reviewed version of each file, so you can read files from disk.`
         : `The working tree does not contain the reviewed version.
@@ -127,50 +135,64 @@ That exit code is expected.
 
 ${source}
 
-Changed files:
-${files}
-
 This review is read-only.
 Do not modify files, branches, the index, or other git state.
 Pass \`--no-pager\` to every \`git\` command.`;
 }
 
-const DEFAULT_SCOPE = `Find the base: the merge base of \`HEAD\` and the default branch.
-Use \`origin/HEAD\` as the default branch, or \`origin/main\` if \`origin/HEAD\` does not exist, or \`main\` if neither exists.
-Do not use \`@{upstream}\`: for a pushed feature branch it hides the branch's own commits.
+const DEFAULT_BASE = `Find the merge base of \`HEAD\` and the default branch (\`origin/HEAD\`, falling back to \`origin/main\`, then \`main\`).
+Do not use \`@{upstream}\`: for a pushed feature branch it hides the branch's own commits.`;
+
+function targetRules(target) {
+    if (!target) {
+        return `No target was given.
+Review the current branch plus uncommitted and untracked changes:
+- ${DEFAULT_BASE}
 - If there are uncommitted changes to tracked files, run \`git --no-pager diff <base>\`.
   This shows committed and uncommitted changes in one diff.
 - Otherwise, run \`git --no-pager diff <base> HEAD\`.
 - Also include each untracked file that \`git ls-files --others --exclude-standard\` lists.
-  Diff each one with \`git --no-pager diff --no-index /dev/null <path>\`.
-If all of these commands print nothing, return \`[]\` for \`files\`.`;
-
-export function scopePrompt(target) {
-    const requested = target
-        ? `The user asked to review \`${target}\`.
-Identify the kind of target and use the matching diff:
+  Diff each one with \`git --no-pager diff --no-index /dev/null <path>\`.`;
+    }
+    return `The user asked to review: \`${target}\`.
+Follow that request literally; do not widen the scope to the whole branch when the user asked for a narrower slice.
+Match the target to the right diff:
+- Uncommitted or working-tree changes: run \`git --no-pager diff HEAD\`, plus each untracked file that \`git ls-files --others --exclude-standard\` lists (\`git --no-pager diff --no-index /dev/null <path>\`).
+  Do not include committed branch changes.
+- Staged changes: run \`git --no-pager diff --cached\`.
 - Pull request number or URL: run \`gh pr view <pr> --json baseRefName,headRefOid\` to get the base branch and head commit.
   Run \`git fetch origin <baseRefName>\` so that \`origin/<baseRefName>\` is current.
   If \`HEAD\` is the head commit, diff from the merge base of \`origin/<baseRefName>\` and \`HEAD\`.
   Otherwise, run \`git fetch origin pull/<number>/head\`, then diff from the merge base of \`origin/<baseRefName>\` and \`FETCH_HEAD\`.
   Fetching does not change the working tree or any branch.
 - Branch: diff from the merge base of the default branch and the branch to the branch.
-- Commit range: diff that range.
-- Path: use the default scope, limited to that path.
-  Pass the path after \`--\` to each \`git diff\` command, and include only untracked files under that path.
+- Commit or commit range: diff that commit (\`git --no-pager diff <sha>~1 <sha>\`) or range (\`git --no-pager diff <range>\`).
+- File or directory path: use the branch-plus-uncommitted diff limited to that path.
+  ${DEFAULT_BASE}
+  Pass \`-- <path>\` to \`git --no-pager diff <base>\` (or \`<base> HEAD\`), and include only untracked files under that path.
+- Any other description (for example "last 2 commits" or "uncommitted changes in src/"): run the matching read-only \`git diff\` command.`;
+}
 
-Default scope:
-${DEFAULT_SCOPE}`
-        : `No target was given.
-Use the default scope:
-${DEFAULT_SCOPE}`;
+function gatherScopeBlock(target) {
+    return `## Review scope
 
+${targetRules(target)}
+
+\`git diff --no-index\` exits with code 1 when it finds differences.
+That exit code is expected.
+If the reviewed revision is not checked out in the working tree, read files with \`git --no-pager show <sha>:<path>\` instead of reading them from disk.
+This review is read-only.
+Do not modify files, branches, the index, or other git state.
+Pass \`--no-pager\` to every \`git\` command.`;
+}
+
+export function scopePrompt(target) {
     return `Determine the scope of a read-only code review.
 Do not review the code yet.
 Do not modify files, branches, the index, or other git state.
 Pass \`--no-pager\` to every \`git\` command.
 
-${requested}
+${targetRules(target)}
 
 Other agents run your \`commands\` later, and a fetch can move a ref in the meantime.
 In \`commands\`, write every commit as a full SHA.
@@ -182,18 +204,18 @@ Return an object with these fields:
 - \`description\`: one or two sentences that name the target, the base, and whether the scope includes uncommitted or untracked changes.
 - \`commands\`: the exact shell commands, one per line, that print the complete unified diff under review.
   Do not include \`--stat\` here.
-- \`files\`: the repository-relative path of each changed file.
-  Use \`[]\` when there is nothing to review.
+  Use \`""\` when \`empty\` is \`true\`.
 - \`head\`: the full commit SHA of the reviewed version, or \`HEAD\` when the scope includes uncommitted changes.
-- \`local\`: \`true\` when the working tree contains the reviewed version of every changed file; otherwise \`false\`.`;
+- \`local\`: \`true\` when the working tree contains the reviewed version of every changed file; otherwise \`false\`.
+- \`empty\`: \`true\` when there is nothing to review; otherwise \`false\`.`;
 }
 
-export function lowPrompt(scope, cap) {
-    return `${scopeBlock(scope)}
+export function lowPrompt(target, cap) {
+    return `${gatherScopeBlock(target)}
 
 ## Read
 
-Run the diff commands once.
+Gather the unified diff, then review only the diff hunks.
 Skip test and fixture hunks (\`test/\`, \`spec/\`, \`__tests__/\`, \`*_test.*\`, \`*.test.*\`, \`fixtures/\`, \`testdata/\`).
 This level does not review test changes.
 Do not start subagents, and do not read full files.
@@ -211,7 +233,7 @@ Report only real defects.
 Do not pad the list.
 Return at most ${cap} findings, most severe first.
 
-${FINDING_FIELDS}`;
+${SINGLE_REVIEW_FIELDS}`;
 }
 
 const STANCE = {
@@ -222,14 +244,14 @@ Missing a real bug costs more than reporting a false positive.
 Include a candidate when you can name a concrete failure scenario, even if you are not sure that it triggers.`,
 };
 
-export function inlinePrompt(scope, angleIds, perAngle, stance, cap) {
+export function inlinePrompt(target, angleIds, perAngle, stance, cap) {
     const angles = angleIds
         .map((id, i) => `### ${i + 1}. ${ANGLES[id].title} (\`kind: "${ANGLES[id].kind}"\`)\n\n${ANGLES[id].text}`)
         .join("\n\n");
     return `You are reviewing a code change.
 ${STANCE[stance]}
 
-${scopeBlock(scope)}
+${gatherScopeBlock(target)}
 
 ## Check each angle
 
@@ -251,7 +273,7 @@ Return at most ${cap} findings, most severe first.
 Put correctness bugs before other kinds.
 Do not invent findings to fill the list.
 
-${FINDING_FIELDS}`;
+${SINGLE_REVIEW_FIELDS}`;
 }
 
 export function finderPrompt(scope, angleId, perAngle) {

@@ -14,7 +14,7 @@ const workflows = Object.entries(LEVELS).map(([level, config]) =>
             name: nameOf(level),
             description:
                 `Code review at ${level} effort. ${summarize(config)}. ` +
-                "args: { target?: string } - optional PR number or URL, branch, commit range, or path. " +
+                "args: { target?: string } - optional scope (e.g. 'uncommitted changes', 'staged changes', PR number or URL, branch, commit range, or path). " +
                 "Omit target to review the current branch plus uncommitted and untracked changes. " +
                 "The result includes a `report` field that says how to present it.",
             phases: phasesFor(config.mode).map((title) => ({ title })),
@@ -70,7 +70,7 @@ const sessionReady = new Promise((resolve) => (resolveSession = resolve));
 
 const commands = Object.entries(LEVELS).map(([level, config]) => ({
     name: nameOf(level),
-    description: `${summarize(config)}. Optional argument: PR, branch, range, or path.`,
+    description: `${summarize(config)}. Optional argument: scope (e.g. uncommitted changes, staged, PR, branch, range, or path).`,
     handler: async ({ args }) => {
         const session = await sessionReady;
         const name = nameOf(level);

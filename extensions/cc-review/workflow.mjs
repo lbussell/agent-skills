@@ -22,7 +22,7 @@ export const LEVELS = {
 };
 
 export const phasesFor = (mode) =>
-    mode === "parallel" ? ["Scope", "Find", "Dedup", "Verify", "Sweep"] : ["Scope", "Review"];
+    mode === "parallel" ? ["Scope", "Find", "Dedup", "Verify", "Sweep"] : ["Review"];
 
 export function summarize(config) {
     const cap = `up to ${config.cap} findings`;
@@ -61,23 +61,28 @@ const strict = (properties) => ({
 const scopeSchema = strict({
     description: { type: "string" },
     commands: { type: "string" },
-    files: { type: "array", items: { type: "string" } },
     head: { type: "string" },
     local: { type: "boolean" },
+    empty: { type: "boolean" },
+});
+
+const findingItems = strict({
+    file: { type: "string" },
+    line: { type: "integer" },
+    summary: { type: "string" },
+    failure_scenario: { type: "string" },
+    kind: { type: "string", enum: KINDS },
+    severity: { type: "string", enum: ["high", "medium", "low"] },
 });
 
 const findingsSchema = strict({
-    findings: {
-        type: "array",
-        items: strict({
-            file: { type: "string" },
-            line: { type: "integer" },
-            summary: { type: "string" },
-            failure_scenario: { type: "string" },
-            kind: { type: "string", enum: KINDS },
-            severity: { type: "string", enum: ["high", "medium", "low"] },
-        }),
-    },
+    findings: { type: "array", items: findingItems },
+});
+
+const singleReviewSchema = strict({
+    scope: { type: "string" },
+    empty: { type: "boolean" },
+    findings: { type: "array", items: findingItems },
 });
 
 const dedupSchema = strict({
@@ -171,7 +176,7 @@ function coverageNotes(stats, findings, overCap, cap) {
     return notes;
 }
 
-function finish(ctx, level, scope, findings, stats) {
+function finish(ctx, level, scopeDescription, findings, stats) {
     const cap = LEVELS[level].cap;
     const ranked = rank(findings);
     const overCap = Math.max(0, ranked.length - cap);
@@ -180,7 +185,7 @@ function finish(ctx, level, scope, findings, stats) {
     return {
         report: REPORT,
         level,
-        scope: scope.description,
+        scope: scopeDescription,
         coverage: coverageNotes(stats, reported, overCap, cap),
         findings: reported,
         stats: { ...stats, overCap },
@@ -235,30 +240,29 @@ export async function runReview(ctx, level) {
     const config = LEVELS[level];
     const target = typeof ctx.args?.target === "string" ? ctx.args.target.trim() : "";
 
-    ctx.phase("Scope");
-    const scope = await ctx.agent(scopePrompt(target), { label: "scope", schema: scopeSchema, ...MECHANICAL_MODEL });
-    if (!scope) throw new Error("Could not determine the review scope.");
-    scope.files = scope.files.filter((path) => path.trim() !== "");
-    if (scope.files.length === 0) return finish(ctx, level, scope, [], { empty: true });
-    ctx.log(`Scope: ${scope.description} (${scope.files.length} files)`);
-
     if (config.mode === "parallel") {
+        ctx.phase("Scope");
+        const scope = await ctx.agent(scopePrompt(target), { label: "scope", schema: scopeSchema, ...MECHANICAL_MODEL });
+        if (!scope) throw new Error("Could not determine the review scope.");
+        if (scope.empty || !scope.commands.trim()) return finish(ctx, level, scope.description, [], { empty: true });
+        ctx.log(`Scope: ${scope.description}`);
         const { findings, stats } = await runParallel(ctx, scope, config);
-        return finish(ctx, level, scope, findings, stats);
+        return finish(ctx, level, scope.description, findings, stats);
     }
 
     ctx.phase("Review");
     const prompt =
         config.mode === "inline"
-            ? inlinePrompt(scope, config.angles, config.perAngle, config.stance, config.cap)
-            : lowPrompt(scope, config.cap);
-    let result = await ctx.agent(prompt, { label: "review", schema: findingsSchema });
+            ? inlinePrompt(target, config.angles, config.perAngle, config.stance, config.cap)
+            : lowPrompt(target, config.cap);
+    let result = await ctx.agent(prompt, { label: "review", schema: singleReviewSchema });
     const reviewRetried = !result;
     if (reviewRetried) {
         ctx.log("The review agent failed; retrying once.");
-        result = await ctx.agent(prompt, { label: "review-retry", schema: findingsSchema });
+        result = await ctx.agent(prompt, { label: "review-retry", schema: singleReviewSchema });
     }
     if (!result) throw new Error("The review agent failed twice.");
+    if (result.empty) return finish(ctx, level, result.scope, [], { empty: true, reviewRetried });
     const findings = realFindings(result);
-    return finish(ctx, level, scope, findings, { candidates: findings.length, reviewRetried });
+    return finish(ctx, level, result.scope, findings, { candidates: findings.length, reviewRetried });
 }
